@@ -1,0 +1,20 @@
+{
+  "name": "make-pattern",
+  "description": "A development pattern based on makers",
+  "version": "0.1.0",
+  "author": "Felipe N. Moura<felipenmoura@gmail.com>",
+  "license": "MIT",
+  "repository": "http://github.com/felipenmoura/makers-js",
+  "keywords": [
+    "javascript",
+    "pattern",
+    "development"
+  ],
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-contrib-uglify": "~0.2.2",
+    "grunt-contrib-watch": "*",
+    "grunt-contrib-concat": "~0.3.0"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,1 @@
+// this file is supposed to offer the make.singleton maker
