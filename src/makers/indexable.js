@@ -135,6 +135,20 @@ make.indexable= function(obj){
                 regEx: true
             });
         };
+
+        this.getAt= function(path){
+            var peaces= path.replace(/\[/g, '.').replace(/\]/g, '').split('.'),
+                l= peaces.length,
+                target= this;
+
+            for(var i=0; i<l; i++){
+                if(target[peaces[i]] === void 0){
+                    return void 0;
+                }
+                target= target[peaces[i]];
+            }
+            return target;
+        };
     }
 
     Indexable.apply(obj);
