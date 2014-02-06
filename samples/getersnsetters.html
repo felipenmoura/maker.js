@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+    <head>
+    </head>
+    <body>
+
+        <h3>Look the console of your browser</h3>
+
+        <div>
+            This maker will allow you to easily create setters and getters for all the properties in a given object.<br/>
+            The source code:<br/>
+            <pre id='sc'></pre>
+            The output is in your console.
+        </div>
+
+        <script src='../dist/maker.js'></script>
+
+        <script id='sampleCode'>
+            var o= {
+                name: 'felipe',
+                age: 28,
+                desc: 'a nice guy'
+            };
+
+            make.gettable(o);
+            make.settable(o);
+            // or it could be make.setAndGetable(o);
+
+            /*
+                you could also pass options, like:
+                make.setAndGetable(o, {
+                    specificOnly: true // no generic set or get will be created
+                });
+
+            */
+            console.log(o);
+
+            var Person= function(){
+                this.name= '';
+                this.age= -1;
+                this.desc= '';
+
+                make.setAndGetable(this, {
+                    filterIn: function(prop, value){
+                        switch(prop){
+                            case 'age':
+                                if(isNaN(value) || value < 0 || value >130){
+                                    console.warn('invalid age to set!');
+                                    return undefined;
+                                }
+                            break;
+                            default:
+                                if(value === '' || value === void 0){
+                                    console.warn('invalid value to set! '+value);
+                                    return undefined;
+                                }
+                        }
+                        return value;
+                    },
+                    filterOut: function(prop, value){
+                        switch(prop){
+                            case 'name':
+                                return 'Hi, my name is '+value;
+                            break;
+                            case 'age':
+                                return 'You are not supposed to know my age!';
+                        }
+                        return value;
+                    }
+                });
+
+                return this;
+            };
+            var p1 = new Person();
+            var p2 = new Person();
+            p1.name= 'Felipe';
+            p1.setAge(28).setDesc('a programmer');
+
+            p2.set('name', 'Moura').set('age', 19).set('desc', 'something here');
+
+            console.log(p1);
+            console.log(p2);
+        </script>
+
+        <script>
+            setTimeout(function(){
+                document.getElementById('sc').innerHTML= document.getElementById('sampleCode').text;
+            }, 100);
+        </script>
+
+    </body>
+</html>
