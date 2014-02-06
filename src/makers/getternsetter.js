@@ -1,35 +1,5 @@
 (function(){
 
-	var makeSettable= function(target, prop, opts){
-		var setterName= 'set'+prop[0].toUpperCase() + prop.substring(1);
-		if(typeof target[prop] != 'function' && !target[setterName]){
-			target[setterName]= function(value){
-
-				if(opts.filterIn){
-					value= opts.filterIn(prop, value);
-					if(value !== void 0){
-						target[prop]= value;
-					}
-				}else{
-					target[prop]= value;
-				}
-				return target;
-			}
-		}
-	};
-
-	var makeGettable= function(target, prop, opts){
-		var getterName= 'get'+prop[0].toUpperCase() + prop.substring(1);
-		if(typeof target[prop] != 'function' && !target[getterName]){
-			target[getterName]= function(){
-				if(opts.filterOut){
-					return opts.filterOut(prop, target[prop]);
-				}
-				return target[prop];
-			}
-		}
-	};
-
 	make.setAndGetable= function(target, options){
 
 		options= options || {};
@@ -44,35 +14,55 @@
 
 		for(i in target){
 			if(target.hasOwnProperty(i)){
-				if(options.setter){
-					makeSettable(target, i, options);
-				}
-				if(options.getter){
-					makeGettable(target, i, options);
-				}
-				if(options.protected){
-					Object.defineProperty(target, i, {
-		                enumerable: false,
-		                configurable: false,
-		                //writable: false,
-		                //value: target[i],
-		                set: function(val){
-		                	var setter= 'set'+i[0].toUpperCase()+i.substring(1);
-		                	if(target[setter] && typeof target[setter] == 'function'){
-		                		console.log(this);
-			                	return false;//target[setter](val);
+
+				(function(target, i){
+					var value= target[i];
+					var name= i[0].toUpperCase()+i.substring(1);
+
+					target['set'+name]= function(val){
+						var tmp= null;
+						if(options.filterIn){
+							tmp= options.filterIn(i, val);
+							if(tmp !== void 0){
+								value= tmp;
+							}
+						}else{
+							value= val;
+						}
+						return target;
+					};
+
+					target['get'+name]= function(){
+						if(options.filterOut){
+							return options.filterOut(i, value);
+						}
+						return value;
+					};
+
+					if(options.protected){
+						Object.defineProperty(target, i, {
+			                enumerable: false,
+			                configurable: false,
+			                //writable: false,
+			                //value: target[i],
+			                set: function(val){
+			                	//value= val;
+			                	this['set'+name](val);
+			                	return this;
+			                },
+			                get: function(){
+			                	return this['get'+name]();
 			                }
-			                return false;
-		                }
-		            });
-				}
+			            });
+					}
+				})(target, i);
 			}
 		}
 
 		if(options.setter && !target.set && !options.specificOnly){
 			target.set= function(prop, val){
 				//target[prop]= val;
-				target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
+				return target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
 			}
 		}
 

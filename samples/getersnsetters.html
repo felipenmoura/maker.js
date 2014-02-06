@@ -51,7 +51,7 @@
                             break;
                             default:
                                 if(value === '' || value === void 0){
-                                    console.warn('invalid value to set!');
+                                    console.warn('invalid value to set! '+value);
                                     return undefined;
                                 }
                         }
@@ -63,7 +63,7 @@
                                 return 'Hi, my name is '+value;
                             break;
                             case 'age':
-                                return 'You are not supposed to know my name!';
+                                return 'You are not supposed to know my age!';
                         }
                         return value;
                     }
@@ -71,8 +71,15 @@
 
                 return this;
             };
-            var p = new Person();
-            console.log(p);
+            var p1 = new Person();
+            var p2 = new Person();
+            p1.name= 'Felipe';
+            p1.setAge(28).setDesc('a programmer');
+
+            p2.set('name', 'Moura').set('age', 19).set('desc', 'something here');
+
+            console.log(p1);
+            console.log(p2);
         </script>
 
         <script>
