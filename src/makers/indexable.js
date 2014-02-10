@@ -79,10 +79,11 @@ make.indexable= function(obj){
             }
 
             path= path || [];
-            cur= cur || self;
+            cur= cur || this || self;
             opts= opts || {};
             var i= null,
-                found= false;
+                found= false,
+                valueFound= void 0;
 
             var compare= function(target, key, search){
 
@@ -117,13 +118,13 @@ make.indexable= function(obj){
                 if(cur.hasOwnProperty(i)){
                     if( compare(cur, i, search) ){
                         path.push(castEl(cur, i));
+                        valueFound= cur[i];
                         found= true;
                         break;
 
                     }else{
                         if(cur[i] && typeof cur[i] == 'object'){
                             path.push(castEl(cur, i));
-                            //cur= cur[i];
                             found= self.find(search, opts, cur[i], path);
                             if(found){
                                 return found;
@@ -136,7 +137,11 @@ make.indexable= function(obj){
             }
 
             if(found && path && path.length){
-                return path.join('').replace('.', '');
+                if(opts.returnPath !== false){
+                    return path.join('').replace('.', '');
+                }else{
+                    return valueFound;
+                }
             }
             return false;
         };
@@ -201,6 +206,13 @@ make.indexable= function(obj){
             }
             return target;
         };
+
+        if(typeof obj == 'function'){
+            Indexable.apply(obj.prototype);
+            return obj;
+        }else{
+            Indexable.apply(obj);
+        }
     }
 
     Indexable.apply(obj);
