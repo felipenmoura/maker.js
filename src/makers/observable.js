@@ -7,7 +7,7 @@
      * To trigger events to all pkg listeners, use:
      * __privileged.observable.trigger('trigger', data);
      */
-    Observer= function(observed, observerOpts){
+    var Observer= function(observed, observerOpts){
 
         // tries to store the name of the object being observed
         if(observed === void 0){
