@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+    <head>
+    </head>
+    <body>
+
+        <h3>Look the console of your browser</h3>
+
+        <div>
+            Adds observable methods and properties to objects and classes.<br/>
+            The source code:<br/>
+            <pre id='sc'></pre>
+            The output is in your console.
+        </div>
+
+        <script src='../../dist/maker.js'></script>
+
+        <script id='sampleCode'>
+            
+            function Klass(){
+                this.something= 'foo';
+                this.another= 123;
+            }
+
+            Klass= make.observable(Klass);
+
+            console.log(Klass);
+            var inst= new Klass();
+            inst.on('tryout', function(arg){ alert('it worked ' + arg); });
+            inst.trigger('tryout', '\\o/');
+
+            /************************/
+
+            var o= {
+                data: {
+                    foo: 1,
+                    bar: 2
+                },
+                fooBar: 'abcbba'
+            };
+
+            make.observable(o);
+            o.on('fooBar', function(newVal){ console.log('fooBar was changed to ' + newVal) });
+            o.set('fooBar', 'aybx');
+
+            o.data.on('foo', function(){console.log('data.foo was also changed!');});
+            o.data.set('foo', 'yeah');
+
+        </script>
+
+        <script>
+            setTimeout(function(){
+                document.getElementById('sc').innerHTML= document.getElementById('sampleCode').text;
+            }, 100);
+        </script>
+
+    </body>
+</html>

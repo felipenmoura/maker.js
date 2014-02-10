@@ -1,5 +1,7 @@
 make.readonly= function(target, options){
 
+    var prop= null
+
     if(typeof target != 'object'){
         return console.error('throttle:throttle maker requires an object as target(the first argument). All the methods will be treated as throttles. The second argument(options) accepts "methods" as an array with the names of methods you want to become throttle.');
     }
