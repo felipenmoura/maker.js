@@ -1,64 +1,412 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Maker.js : This project intends to describe as many ways as possible to use the make-pattern in javascript." />
+    <title>Maker Pattern</title>
+    <link href='http://fonts.googleapis.com/css?family=Josefin+Sans:400,700,700italic' rel='stylesheet' type='text/css'>
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link rel="icon" type="image/png" href="images/maker-logo-ico.png" />
 
-    <title>Maker.js</title>
+    <style type='text/css'>
+
+      body{
+        margin:  0;
+        font-size: 16px;
+        font-family: sans-serif, Arial;
+      }
+
+      @-webkit-keyframes bg-movement{
+        0%{
+          background-color: #586676;
+        }
+        100%{
+          background-color: blue;
+        }
+      }
+      @keyframes bg-movement{
+        0%{
+          background-color: #586676;
+        }
+        100%{
+          background-color: blue;
+        }
+      }
+
+      .logo{
+        background: url(images/maker-logo.png) no-repeat;
+        width: 100px;
+        height: 80px;
+        background-size: 100% 100%;
+        position: relative;
+        top: 10px;
+        left: 20px;
+        float: left;
+      }
+      h1, h2, h3, h4, h5{
+        font-family: 'Josefin Sans', sans-serif;
+        margin: 0px;
+      }
+
+      #header-container{
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        z-index: 3;
+      }
+      #header-container.fixed{
+        position: fixed;
+        background: white;
+      }
+
+      #header-container.fixed header{
+        width: 100%;
+        height: 50px;
+        border-width: 2px;
+      }
+      #header-container.fixed header .logo{
+        width: 50px;
+        height: 40px;
+        top: 5px;
+      }
+      #header-container.fixed header h1{
+        font-size: 2em;
+        top: 5px;
+      }
+      #header-container.fixed header h2{
+        font-size: 1em;
+      }
+
+      #header-container.fixed nav ul li {
+        height: 1.2em;
+        font-size: 1em;
+        padding-top: 0.2em;
+        border-bottom: solid 1px #999;
+      }
+
+      header, header h1, header h2, header .logo, #header-container li, #forkme_banner{
+        transition: all linear 0.2s;
+      }
+
+      header{
+        position: relative;
+        border-bottom: solid 6px #fca600;
+        box-shadow: 0px 0px 1px 2px black;
+        /*overflow: hidden;*/
+
+        width: 100%;
+        height: 100px;
+      }
+      header h1{
+        font-size: 3.5em;
+        margin: 0px;
+        color: white;
+        position: relative;
+        padding: 0;
+        top: 20px;
+        left: 30px;
+        float: left;
+
+        -webkit-box-reflect: below -0.4em -webkit-gradient(linear, left top, left bottom, from(transparent), to(rgba(255,255,255,0.4)));
+        -moz-box-reflect: below -0.4em -moz-gradient(linear, left top, left bottom, from(transparent), to(rgba(255,255,255,0.4)));
+        box-reflect: below -0.4em gradient(linear, left top, left bottom, from(transparent), to(rgba(255,255,255,0.4)));
+      }
+
+      header h2{
+        position: absolute;
+        right: 30px;
+        bottom: 10px;
+      }
+
+      .gradient{
+
+        background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZmZmZmZmIiBzdG9wLW9wYWNpdHk9IjAuMyIvPgogICAgPHN0b3Agb2Zmc2V0PSIxNiUiIHN0b3AtY29sb3I9IiNmMWYxZjEiIHN0b3Atb3BhY2l0eT0iMC4zMSIvPgogICAgPHN0b3Agb2Zmc2V0PSIxNyUiIHN0b3AtY29sb3I9IiNlMWUxZTEiIHN0b3Atb3BhY2l0eT0iMC4zMSIvPgogICAgPHN0b3Agb2Zmc2V0PSIyNiUiIHN0b3AtY29sb3I9IiNmZmZmZmYiIHN0b3Atb3BhY2l0eT0iMC4zMiIvPgogICAgPHN0b3Agb2Zmc2V0PSI0MSUiIHN0b3AtY29sb3I9IiNlMWUxZTEiIHN0b3Atb3BhY2l0eT0iMC4zMyIvPgogICAgPHN0b3Agb2Zmc2V0PSI1MSUiIHN0b3AtY29sb3I9IiNlMWUxZTEiIHN0b3Atb3BhY2l0eT0iMC4zNCIvPgogICAgPHN0b3Agb2Zmc2V0PSI1MiUiIHN0b3AtY29sb3I9IiNmZmZmZmYiIHN0b3Atb3BhY2l0eT0iMC4zNCIvPgogICAgPHN0b3Agb2Zmc2V0PSI2NiUiIHN0b3AtY29sb3I9IiNlMWUxZTEiIHN0b3Atb3BhY2l0eT0iMC4zNSIvPgogICAgPHN0b3Agb2Zmc2V0PSI4NyUiIHN0b3AtY29sb3I9IiNjNGM0YzQiIHN0b3Atb3BhY2l0eT0iMC4zNiIvPgogICAgPHN0b3Agb2Zmc2V0PSI5NiUiIHN0b3AtY29sb3I9IiNlN2U3ZTciIHN0b3Atb3BhY2l0eT0iMC4zNiIvPgogICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjZjZmNmY2IiBzdG9wLW9wYWNpdHk9IjAiLz4KICA8L2xpbmVhckdyYWRpZW50PgogIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9InVybCgjZ3JhZC11Y2dnLWdlbmVyYXRlZCkiIC8+Cjwvc3ZnPg==);
+        background: -moz-linear-gradient(-45deg, rgba(255,255,255,0.3) 0%, rgba(241,241,241,0.31) 16%, rgba(225,225,225,0.31) 17%, rgba(255,255,255,0.32) 26%, rgba(225,225,225,0.33) 41%, rgba(225,225,225,0.34) 51%, rgba(255,255,255,0.34) 52%, rgba(225,225,225,0.35) 66%, rgba(196,196,196,0.36) 87%, rgba(231,231,231,0.36) 96%, rgba(246,246,246,0) 100%);
+        background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,rgba(255,255,255,0.3)), color-stop(16%,rgba(241,241,241,0.31)), color-stop(17%,rgba(225,225,225,0.31)), color-stop(26%,rgba(255,255,255,0.32)), color-stop(41%,rgba(225,225,225,0.33)), color-stop(51%,rgba(225,225,225,0.34)), color-stop(52%,rgba(255,255,255,0.34)), color-stop(66%,rgba(225,225,225,0.35)), color-stop(87%,rgba(196,196,196,0.36)), color-stop(96%,rgba(231,231,231,0.36)), color-stop(100%,rgba(246,246,246,0)));
+        background: -webkit-linear-gradient(-45deg, rgba(255,255,255,0.3) 0%,rgba(241,241,241,0.31) 16%,rgba(225,225,225,0.31) 17%,rgba(255,255,255,0.32) 26%,rgba(225,225,225,0.33) 41%,rgba(225,225,225,0.34) 51%,rgba(255,255,255,0.34) 52%,rgba(225,225,225,0.35) 66%,rgba(196,196,196,0.36) 87%,rgba(231,231,231,0.36) 96%,rgba(246,246,246,0) 100%);
+        background: -o-linear-gradient(-45deg, rgba(255,255,255,0.3) 0%,rgba(241,241,241,0.31) 16%,rgba(225,225,225,0.31) 17%,rgba(255,255,255,0.32) 26%,rgba(225,225,225,0.33) 41%,rgba(225,225,225,0.34) 51%,rgba(255,255,255,0.34) 52%,rgba(225,225,225,0.35) 66%,rgba(196,196,196,0.36) 87%,rgba(231,231,231,0.36) 96%,rgba(246,246,246,0) 100%);
+        background: -ms-linear-gradient(-45deg, rgba(255,255,255,0.3) 0%,rgba(241,241,241,0.31) 16%,rgba(225,225,225,0.31) 17%,rgba(255,255,255,0.32) 26%,rgba(225,225,225,0.33) 41%,rgba(225,225,225,0.34) 51%,rgba(255,255,255,0.34) 52%,rgba(225,225,225,0.35) 66%,rgba(196,196,196,0.36) 87%,rgba(231,231,231,0.36) 96%,rgba(246,246,246,0) 100%);
+        background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%,rgba(241,241,241,0.31) 16%,rgba(225,225,225,0.31) 17%,rgba(255,255,255,0.32) 26%,rgba(225,225,225,0.33) 41%,rgba(225,225,225,0.34) 51%,rgba(255,255,255,0.34) 52%,rgba(225,225,225,0.35) 66%,rgba(196,196,196,0.36) 87%,rgba(231,231,231,0.36) 96%,rgba(246,246,246,0) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4dffffff', endColorstr='#00f6f6f6',GradientType=1 );
+
+        /*-webkit-animation: bg-movement linear alternate infinite 30s;
+        animation: bg-movement linear infinite 30s alternate;*/
+        background-color: #44b;
+      }
+
+      #header-container.fixed #forkme_banner {
+        top: 53px;
+      }
+
+      #forkme_banner {
+        display: block;
+        position: absolute;
+        top: -1px;
+        right: 10px;
+        z-index: 10;
+        padding: 10px 50px 10px 10px;
+        color: #fff;
+        background: url('images/blacktocat.png') #777 no-repeat 95% 50%;
+        font-weight: 700;
+        box-shadow: 0 0 10px rgba(0,0,0,.5);
+        border-bottom-left-radius: 2px;
+        border-bottom-right-radius: 2px;
+        border: solid 1px #bbb;
+        border-top: none;
+        text-decoration: none;
+      }
+      #forkme_banner:hover {
+        text-decoration: underline;
+      }
+
+      nav{
+        margin-top: -6em;
+      }
+
+      nav ul{
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      nav ul li {
+        float: left;
+        width: 20%;
+        text-align: center;
+        cursor: pointer;
+        height: 1.5em;
+        padding-top: 0.5em;
+        font-size: 1.2em;
+        color: #444;
+        font-weight: bold;
+
+        /*background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIyMCUiIHN0b3AtY29sb3I9IiNmZmZmZmYiIHN0b3Atb3BhY2l0eT0iMSIvPgogICAgPHN0b3Agb2Zmc2V0PSIyOCUiIHN0b3AtY29sb3I9IiNmZmZmZmYiIHN0b3Atb3BhY2l0eT0iMC45Ii8+CiAgICA8c3RvcCBvZmZzZXQ9IjU3JSIgc3RvcC1jb2xvcj0iI2ZmZmZmZiIgc3RvcC1vcGFjaXR5PSIwLjUzIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZmZmZmYiIHN0b3Atb3BhY2l0eT0iMCIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
+        background: -moz-linear-gradient(top, rgba(255,255,255,1) 20%, rgba(255,255,255,0.9) 28%, rgba(255,255,255,0.53) 57%, rgba(255,255,255,0) 100%);
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(20%,rgba(255,255,255,1)), color-stop(28%,rgba(255,255,255,0.9)), color-stop(57%,rgba(255,255,255,0.53)), color-stop(100%,rgba(255,255,255,0)));
+        background: -webkit-linear-gradient(top, rgba(255,255,255,1) 20%,rgba(255,255,255,0.9) 28%,rgba(255,255,255,0.53) 57%,rgba(255,255,255,0) 100%);
+        background: -o-linear-gradient(top, rgba(255,255,255,1) 20%,rgba(255,255,255,0.9) 28%,rgba(255,255,255,0.53) 57%,rgba(255,255,255,0) 100%);
+        background: -ms-linear-gradient(top, rgba(255,255,255,1) 20%,rgba(255,255,255,0.9) 28%,rgba(255,255,255,0.53) 57%,rgba(255,255,255,0) 100%);
+        background: linear-gradient(to bottom, rgba(255,255,255,1) 20%,rgba(255,255,255,0.9) 28%,rgba(255,255,255,0.53) 57%,rgba(255,255,255,0) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#00ffffff',GradientType=0 );*/
+      }
+
+      nav ul li:hover{
+        color: white;
+        text-shadow: 0px 0px 1px black;
+      }
+
+      nav ul li:nth-child(1){
+        --background-color: #f66;
+      }
+      nav ul li:nth-child(1):hover{
+        background: #f44;
+      }
+      nav ul li:nth-child(2){
+        --background-color: #f90;
+      }
+      nav ul li:nth-child(2):hover{
+        background: #fa4;
+      }
+      nav ul li:nth-child(3){
+        --background-color: #66f;
+      }
+      nav ul li:nth-child(3):hover{
+        background: #44f;
+      }
+      nav ul li:nth-child(4){
+        --background-color: #6f6;
+      }
+      nav ul li:nth-child(4):hover{
+        background: #4d4;
+      }
+      nav ul li:nth-child(5){
+        --background-color: #eee;
+        color: black;
+        text-shadow: none;
+        font-weight: bold;
+      }
+      nav ul li:nth-child(5):hover{
+        background: #ddd;
+      }
+
+      li a, li a:visited{
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .page-container{
+        position: relative;
+        top: 1.5em;
+        margin-top: 120px;
+        z-index: 2;
+      }
+
+    </style>
+
+
+    <style type='text/css'>
+
+      .decorator{
+        background-image: url(images/lab.png);
+        background-size: 100% 100%;
+        width: 414px;
+        height: 300px;
+        position: fixed;
+        right: 0px;
+        bottom: 0px;
+        opacity: 0.4;
+        z-index: 1;
+      }
+
+      section{
+        margin: 1em;
+        width: 70%;
+      }
+      section em{
+        display: block;
+        margin: 10px;
+        font-size: 1.2em;
+      }
+      section h3{
+        margin-bottom: 0.5em;
+        font-size: 1.4em;
+        color: #44b;
+        border-bottom: solid 2px #fca600;
+      }
+
+      section pre{
+        background: #efefef;
+        border-left: solid 2px #fca600;
+        padding: 4px;
+      }
+
+      footer{
+        margin-bottom: 40px;
+        margin-left: 1em;
+      }
+
+    </style>
+
+    <!--[if gte IE 9]>
+      <style type="text/css">
+        .gradient {
+           filter: none;
+        }
+      </style>
+    <![endif]-->
+
   </head>
 
   <body>
+    <div id='header-container'>
+      <header class='gradient'>
+        <div class='logo'></div>
+        <h1>Maker</h1>
+        <h2>
+          Genetically Engineered Objects in JavaScript
+        </h2>
+        <a id="forkme_banner" href="https://github.com/felipenmoura/maker.js">View on GitHub</a>
+      </header>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/felipenmoura/maker.js">View on GitHub</a>
-
-          <h1 id="project_title">Maker.js</h1>
-          <h2 id="project_tagline">This project intends to describe as many ways as possible to use the make-pattern in javascript.</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/felipenmoura/maker.js/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/felipenmoura/maker.js/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
+      <nav>
+        <ul>
+          <li><a href='#what-is'>What is</a></li>
+          <li><a href='#what-for'>What for</a></li>
+          <li><a href='#how'>How</a></li>
+          <li><a href='#download'>Download</a></li>
+          <li><a href='#github'>Github</a></li>
+        </ul>
+      </nav>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h3>
-<a name="maker-pattern" class="anchor" href="#maker-pattern"><span class="octicon octicon-link"></span></a>Maker Pattern</h3>
+    <div class='page-container'>
+      <section id='what-is'>
+        <h3>What is the maker-pattern?</h3>
+        <strong>Maker pattern</strong> has the goal of manipulating the genes of your objects and classes to add useful tools, properties or apply more complex patterns.<br/>
+      </section>
+      <section id='what-for'>
+        <h3>Why is it useful?</h3>
+        There are so many useful patterns out there, you probably already known most of them, but why to apply each one every time you need?<br/>
+        <em>"If it is a pattern to be repeated, then it should be applied by a machine!"</em><br/>
+        There are many advantages, such as:
+        <ul>
+          <li>A lot less code for you to type</li>
+          <li>The API for that pattern will always be the same(enough memorising APi's methods that do the same, in different projects)</li>
+          <li>Once maker is updated, so will be all your objects that use maker! You don't need to write a single extra line to adapt of your objects to have that useful feature that was just added to some design-pattern</li>
+          <li>Creating a framework? Apply the best methodologies and patterns with maker, to your exposed objects</li>
+          <li>Building a simple page, but when a json changes, you want the interface to adapt...what about less than 10kb of js and one line to apply it?</li>
+          <li>Really easy to learn how to use, and then, lean design-patterns through it</li>
+          <li>Apply advanced patterns and techniques with one line</li>
+        </ul>
+      </section>
 
-<p>We are proposing here the creation of the make-pattern for development.<br>
-The idea is to use the advantages of wrapers in JavaScript to implement "interface" for useful, well known patterns or features, such as observables, web workers, throttling, debouncing, indexable, models, singletons, etc.<br><br>
-Ideas and suggestions are quite welcome, specially if you want to make something here better or add new makers.</p>
+      <section id='how'>
+        <h3>Hmm..interesting...how do I use it? (docs)</h3>
+        <div>
+          Each maker may offer different options and possibilities, but you only have to understand how to use maker in two ways.<br/>
+          <ol>
+            <li>
+              <strong>Making Objects/Instances</strong><br/>
+              By passing an object(from, json, raw object or instance, for example), the object itself is engineered:<br/>
+              Example:
+              <pre>make.observable(myObject);</pre>
+            </li>
+            <li>
+              <strong>Making Functions/Classes</strong><br/>
+              By passing a function. In this case, as functions are not passed by reference, you will received the changed function returned from the maker<br/>
+              Example: (used in this page)
+              <pre>var fn= make.debounce(function(){...});
+window.onscroll= fn;</pre>
+            </li>
+          </ol>
+          To see how each maker work, please go to the <a href='https://github.com/felipenmoura/maker.js/tree/master/samples' target='blank'>samples</a> page.
+        </div>
+      </section>
+
+      <section id='download'>
+        <h3>Ok, I will use it</h3>
+        <div>
+          That's great!<br/>
+          Please download one of the released from <a href='https://github.com/felipenmoura/maker.js/releases/' target='blank'>maker.js on github</a> and then start using the file found in "dist/maker.min.js".
+        </div>
+      </section>
+
+      <section id='github'>
+        <h3>Github</h3>
+        <div>
+          So you want to contribute? That's awesome!<br/>
+          You can <a href='https://github.com/felipenmoura/maker.js/' target='blank'>fork the project in github</a> and contributing in many ways, like creating your own maker, suggestion evolutions or new makers(using issues), report bugs(also issues), etc!<br/>
+          Once you forked it, you can simply delete the dist folder, it will be recreated as you work.<br/>
+          In your terminal, run:
+          <pre>$ npm install
+$ grunt watch</pre>
+        </div>
+        <br/>
       </section>
     </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Maker.js maintained by <a href="https://github.com/felipenmoura">felipenmoura</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
+    <div class='decorator'></div>
 
-              <script type="text/javascript">
-            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-          </script>
-          <script type="text/javascript">
-            try {
-              var pageTracker = _gat._getTracker("UA-1270869-17");
-            pageTracker._trackPageview();
-            } catch(err) {}
-          </script>
+    <footer>
+      This project is open source and is under the <a href='http://opensource.org/licenses/MIT' target='blank'>MIT license</a>.
+    </footer>
 
+    <script src='javascripts/maker.js'></script>
+    <script>
+
+      var h= document.getElementById('header-container'),
+        hh= 50;
+
+      function onScroll(evt){
+        var st= document.documentElement? document.documentElement.scrollTop : document.body.scrollTop;
+        if(st >= hh ){
+          h.className= 'fixed';
+        }else{
+          h.className= '';
+        }
+      }
+
+      window.onscroll= make.debounce(onScroll);
+
+    </script>
 
   </body>
 </html>
