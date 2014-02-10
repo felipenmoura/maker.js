@@ -13,7 +13,7 @@
             The output is in your console.
         </div>
 
-        <script src='../dist/maker.js'></script>
+        <script src='../../dist/maker.js'></script>
 
         <script id='sampleCode'>
             
@@ -25,6 +25,26 @@
             Klass= make.observable(Klass);
 
             console.log(Klass);
+            var inst= new Klass();
+            inst.on('tryout', function(arg){ alert('it worked ' + arg); });
+            inst.trigger('tryout', '\\o/');
+
+            /************************/
+
+            var o= {
+                data: {
+                    foo: 1,
+                    bar: 2
+                },
+                fooBar: 'abcbba'
+            };
+
+            make.observable(o);
+            o.on('fooBar', function(newVal){ console.log('fooBar was changed to ' + newVal) });
+            o.set('fooBar', 'aybx');
+
+            o.data.on('foo', function(){console.log('data.foo was also changed!');});
+            o.data.set('foo', 'yeah');
 
         </script>
 

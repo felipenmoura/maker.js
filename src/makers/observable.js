@@ -29,7 +29,7 @@
             originalSet= null,
             indexOf= function(trigger, obj){
                 var i = 0;
-                trigger= self.observerving[trigger] || [];
+                trigger= self.observing[trigger] || [];
 
                 while(i < trigger.length){
                     if(trigger[i] === obj){
@@ -41,7 +41,7 @@
             };
 
         // preparing the list with its default object
-        self.observerving= {"*": []};
+        self.observing= {"*": []};
 
         /**
          * Starts listening to events
@@ -72,12 +72,12 @@
                 throw new Error('observer:Invalid listener!\nWhen adding listeners to observables, it is supposed to receive a function as callback.');
             }
             if(typeof trigger == 'string'){
-                if(!self.observerving[trigger]){
-                    self.observerving[trigger]= [];
+                if(!self.observing[trigger]){
+                    self.observing[trigger]= [];
                 }
-                self.observerving[trigger].push(fn);
+                self.observing[trigger].push(fn);
             }else{
-                self.observerving['*'].push(fn);
+                self.observing['*'].push(fn);
             }
             return this;
         };
@@ -176,7 +176,7 @@
                 fn= trigger;
                 trigger= '*';
             }
-            self.observerving[trigger].splice(indexOf(trigger, fn), 1);
+            self.observing[trigger].splice(indexOf(trigger, fn), 1);
             return this;
         };
 
@@ -221,7 +221,7 @@
                 trigger= '*';
             }
 
-            list= (self.observerving[trigger])? self.observerving[trigger]: [];
+            list= (self.observing[trigger])? self.observing[trigger]: [];
             l= list.length;
 
             for(; i<l; i++){
@@ -251,11 +251,23 @@
         return this;
     };
     
-    make.observable= function(observerOpts){
+    make.observable= function(target, observerOpts){
 
-        CLASSES.Observer.apply(this, [this, observerOpts]);
+        var i= null;
+        observerOpts= observerOpts || {};
 
-        return this;
+        if(typeof target == 'object' && observerOpts.recursive !== false){
+            for(i in target){
+                if(target[i] && !target[i].observable && typeof target[i] == 'object' && !target[i].length){
+                    // is an object, but not null neither array
+                    make.observable(target[i], observerOpts);
+                }
+            }
+        }
+
+        Observer.apply(target.prototype || target, [target, observerOpts]);
+
+        return target;
     };
 
     /**
