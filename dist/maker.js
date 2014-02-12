@@ -523,6 +523,10 @@ make.indexable= function(obj){
         };
         //}
 
+        if(!this.observable){
+            this.observable= true;
+        }
+
         return this;
     };
     
@@ -531,7 +535,14 @@ make.indexable= function(obj){
         var i= null;
         observerOpts= observerOpts || {};
 
-        if(typeof target == 'object' && observerOpts.recursive !== false){
+        if(target.nodeType){
+            // DOM or Event elements are not treatable
+            return target;
+        }
+
+        if(typeof target == 'object' &&
+            observerOpts.recursive !== false &&
+            target != make){
             for(i in target){
                 if(target[i] && !target[i].observable && typeof target[i] == 'object' && !target[i].length){
                     // is an object, but not null neither array
