@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+    <head>
+    </head>
+    <body>
+
+    	<h3>Look the console of your browser</h3>
+
+        <div>
+            Tieable<br/>
+            <div style='padding: 4px; background: #e9e9e9;'>
+                This is just an element(it uses the deprecated font tag with color attribute, just to show visually the implementation).<br/>
+                My name is <font id='exampleEl' color='black'>[my name here]</font>
+            </div>
+    		The source code:<br/>
+    		<pre id='sc'></pre>
+    		The output is in your console.
+    	</div>
+
+        <script src='../../dist/maker.js'></script>
+
+        <script id='sampleCode'>
+            var o= {
+                name: 'anonymous',
+                color: 'blue'
+            };
+
+            make.tiable(o);
+
+            o.tie(document.getElementById('exampleEl'));
+
+            // will set the ATTRIBUTE color in the tied elements
+            o.set('color', 'red');
+
+            // tying the object's property name to a property or attribute in target
+            o.tie('name', document.getElementById('exampleEl'), 'innerHTML');
+            o.set('name', 'felipe');
+
+            // preparing a class
+            function Person(){
+                this.name= null;
+                this.age= 0;
+                this.color= null;
+                make.tiable(this);
+                this.tie(document.getElementById('exampleEl'));
+                // you COULD do it with this line bellow in your constructor:\
+                    //this.tie('name', document.getElementById('exampleEl'), 'innerHTML');
+                return this;
+            }
+
+            // or you can apply it to the class itsef
+            //Person.tie(document.getElementById('exampleEl'));
+
+            var p= new Person();
+            p.tie(document.getElementById('exampleEl'));
+            p.setName('Foo');
+            p.setAge(19);
+            p.set('color', 'purple');
+
+        </script>
+
+        <script>
+            setTimeout(function(){
+                document.getElementById('sc').innerHTML= document.getElementById('sampleCode').text;
+            }, 100);
+        </script>
+
+    </body>
+</html>

@@ -15,12 +15,19 @@
 		for(i in target){
 			if(target.hasOwnProperty(i)){
 
-				(function(target, i){
-					var value= target[i];
-					var name= i[0].toUpperCase()+i.substring(1);
+				if(typeof target[i] == 'function'){
+					continue;
+				}
 
+				(function(target, i){
+
+					var value= target[i];
+					var name= i[0].toUpperCase() + i.substring(1);
+
+					var oSet= target['set'+name] || function(){};
 					target['set'+name]= function(val){
 						var tmp= null;
+						oSet(val);
 						if(options.filterIn){
 							tmp= options.filterIn(i, val);
 							if(tmp !== void 0){
@@ -32,7 +39,9 @@
 						return target;
 					};
 
+					var oGet= target['get'+name] || function(){};
 					target['get'+name]= function(){
+						value= oGet()||value;
 						if(options.filterOut){
 							return options.filterOut(i, value);
 						}
@@ -55,14 +64,28 @@
 			                }
 			            });
 					}
+
+					target.gettable= options.getter? true: false;
+					target.settable= options.setter? true: false;
+
+
 				})(target, i);
 			}
 		}
 
 		if(options.setter && !target.set && !options.specificOnly){
 			target.set= function(prop, val){
-				//target[prop]= val;
-				return target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
+				var i= null;
+				if(typeof prop == 'object'){
+					for(i in prop){
+						if(prop.hasOwnProperty(i)){
+							target['set'+i[0].toUpperCase() + i.substring(1)](prop[i]);
+						}
+					}
+				}else{
+					target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
+				}
+				return target;
 			}
 		}
 
