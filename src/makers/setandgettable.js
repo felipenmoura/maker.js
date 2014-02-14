@@ -76,7 +76,7 @@
 		var i= null;
 
 		for(i in target){
-			if(target.hasOwnProperty(i)){
+			if(target.hasOwnProperty(i) && typeof target[i] != 'function'){
 
 				(function(target, i){
 

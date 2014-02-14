@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+    <head>
+    </head>
+    <body>
+
+        <h3>Look the console of your browser</h3>
+
+        <div>
+            The source code:<br/>
+            <pre id='sc'></pre>
+            The output is in your console.
+        </div>
+
+        <script src='../../dist/maker.js'></script>
+
+        <script id='sampleCode'>
+        var o= {
+            name: 'felipe',
+            age: 28
+        };
+        
+        make.model(o);
+
+        console.log(o);
+
+        </script>
+
+        <script>
+            setTimeout(function(){
+                document.getElementById('sc').innerHTML= document.getElementById('sampleCode').text;
+            }, 100);
+        </script>
+
+
+    </body>
+</html>
