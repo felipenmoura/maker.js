@@ -207,6 +207,11 @@ make.indexable= function(obj){
             return target;
         };
 
+        this.indexable= true;
+
+    }
+
+    if(!obj.indexable){
         if(typeof obj == 'function'){
             Indexable.apply(obj.prototype);
             return obj;
@@ -214,7 +219,5 @@ make.indexable= function(obj){
             Indexable.apply(obj);
         }
     }
-
-    Indexable.apply(obj);
 
 };

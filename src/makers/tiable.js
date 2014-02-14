@@ -62,10 +62,11 @@ make.tiable= function(objOrClass){
 					// it does have someone tied to it!
 					tmp= tiedList[i][prop];
 					tmp.target[tmp.prop]= val;
-				}
-				if(tiedList[i]['*']){
-					tmp = tiedList[i]['*'];
-					tmp.target[prop]= val;
+				}else{
+					if(tiedList[i]['*']){
+						tmp = tiedList[i]['*'];
+						tmp.target[prop]= val;
+					}
 				}
 			}
 			return val;

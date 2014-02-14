@@ -22,8 +22,7 @@
                 desc: 'a nice guy'
             };
 
-            make.gettable(o);
-            make.settable(o);
+            make.setAndGetable(o);
             // or it could be make.setAndGetable(o);
 
             /*
@@ -46,13 +45,13 @@
                             case 'age':
                                 if(isNaN(value) || value < 0 || value >130){
                                     console.warn('invalid age to set!');
-                                    return undefined;
+                                    throw new Error('invalid value to set');
                                 }
                             break;
                             default:
                                 if(value === '' || value === void 0){
                                     console.warn('invalid value to set! '+value);
-                                    return undefined;
+                                    throw new Error('invalid value to set');
                                 }
                         }
                         return value;
@@ -71,6 +70,7 @@
 
                 return this;
             };
+
             var p1 = new Person();
             var p2 = new Person();
             p1.name= 'Felipe';
