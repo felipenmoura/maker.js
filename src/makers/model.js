@@ -1,8 +1,166 @@
-make.model= function(objOrFn){
-    objOrFn= make.observable(objOrFn);
-    objOrFn= make.indexable(objOrFn);
-
+/*
+make.model= function(model){
     
+    function Model(){
+        this.dt= (new Date()).getTime();
+    }
 
-    return objOrFn;
+
 };
+*/
+
+(function(){
+
+    var modelsList= {};
+
+    make.model= function(model){
+
+        var Model= new Function,
+            i= null;
+
+        for(i in model){
+            if(model.hasOwnProperty(i)){
+                Model.prototype[i]= model[i];
+                //delete model[i];
+            }
+        }
+
+        model.identifier= (new Date()).getTime();
+        modelsList[model.identifier]= [];
+
+        //Model= make.setAndGettable(Model);
+
+        model.create= function(){
+            var m= new Model();
+            
+            make.observable(m);
+            make.setAndGettable(m);
+
+            m.addSetterFilter(function(prop, val){
+                m.trigger(prop, val);
+            });
+
+            if(typeof m.constructor == 'function'){
+                m.constructor.apply(m, Array.prototype.slice.call(arguments, 0));
+            }
+
+            modelsList[model.identifier].push(m);
+
+            return m;
+        }
+    };
+
+    /* Collections */
+    make.collection= function(model){
+        
+        var oModel= model;
+
+        function Collection(model){
+
+            var curPointer= 0,
+                collectionId= model.identifier;
+
+            // making it indexable
+            make.indexable(modelsList[collectionId]);
+            
+            this.getLength= function(){
+                return modelsList[collectionId].length;
+            }
+
+            this.first= function(){
+                return modelsList[collectionId][0] || false;
+            }
+
+            this.last= function(){
+                return modelsList[collectionId][ this.getLength() -1 ] || false;
+            }
+
+            this.goTo= function(idx){
+                if(idx < 0){
+                    idx= 0;
+                }else if(idx >= this.getLength()){
+                    idx= this.getLength() -1;
+                }
+                curPointer= idx;
+                return modelsList[collectionId][idx];
+            };
+
+            this.current= function(){
+                return modelsList[collectionId][curPointer] || false;
+            }
+
+            this.currentIdx= function(){
+                return curPointer;
+            }
+            /**
+             *
+             *  while(x = people.next()){
+             *      console.log(x.name);
+             *  }
+             */
+            this.next= function(){
+                var ret= modelsList[collectionId][curPointer] || false;
+                if(ret){
+                    curPointer++;
+                }
+                return ret;
+            }
+            /**
+             *
+             *  while(x = people.prev()){
+             *      console.log(x.name);
+             *  }
+             */
+            this.prev= function(){
+                var ret= modelsList[collectionId][curPointer] || false;
+                if(ret){
+                    curPointer--;
+                }
+                return ret;
+            }
+
+            this.reset= function(){
+                curPointer= 0;
+            }
+
+            this.get= function(at){
+                return modelsList[collectionId][at] || false;
+            }
+
+            this.list= function(from, to){
+                if(from){
+                    if(to){
+                        return modelsList[collectionId].slice(from, to);
+                    }else{
+                        return modelsList[collectionId].slice(from);
+                    }
+                }else{
+                    return modelsList[collectionId]
+                }
+            };
+
+            /**
+             *
+             *  while(cur = people.query('name', 'son')){
+             *      console.log(cur.name);
+             *  }
+             */
+            this.query= function(prop, valueLike){
+                ret= modelsList[collectionId].query(prop, valueLike, curPointer);
+                if(ret !== false){
+                    curPointer= ret;
+                    ret= this.get(ret);
+                    curPointer++;
+                }
+                return ret;
+            };
+
+            this.queryAll= function(prop, valueLike){
+                return modelsList[collectionId].queryAll(prop, valueLike);
+            };
+        }
+
+        return new Collection(model);
+    };    
+
+})();

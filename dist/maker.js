@@ -142,7 +142,10 @@ make.indexable= function(obj){
 
         var castEl= function(cur, i){
             i= i || '';
-            if(typeof cur == 'object' && cur.length){
+            if(typeof cur == 'object' && cur.length || i.match(/\W/) ){
+                if(isNaN(i)){
+                    i= '"'+i+'"';
+                }
                 i= '['+i+']';
             }else{
                 i= '.'+i;
@@ -204,7 +207,7 @@ make.indexable= function(obj){
             };
 
             for(i in cur){
-                if(cur.hasOwnProperty(i)){
+                if(cur.hasOwnProperty(i) && typeof cur[i] != 'function'){
                     if( compare(cur, i, search) ){
                         path.push(castEl(cur, i));
                         valueFound= cur[i];
@@ -227,7 +230,7 @@ make.indexable= function(obj){
 
             if(found && path && path.length){
                 if(opts.returnPath !== false){
-                    return path.join('').replace('.', '');
+                    return path.join('');//.replace('.', '');
                 }else{
                     return valueFound;
                 }
@@ -282,10 +285,10 @@ make.indexable= function(obj){
             });
         };
 
-        this.getAt= function(path){
+        this.getAt= function(path, node){
             var peaces= path.replace(/\[/g, '.').replace(/\]/g, '').split('.'),
                 l= peaces.length,
-                target= this;
+                target= node || this;
 
             for(var i=0; i<l; i++){
                 if(target[peaces[i]] === void 0){
@@ -295,6 +298,38 @@ make.indexable= function(obj){
             }
             return target;
         };
+
+        this.query= function(prop, valueLike, start, all){
+            if(typeof this != 'object' || this.length === void 0){
+                console.warn('Indexable must be an array to allow queries to execute');
+                return target;
+            }
+            var i= start || 0,
+                l= this.length,
+                item= null,
+                resultSet= [];
+
+            for(; i<l; i++){
+                //console.log(this[i]);
+                item= this.find(valueLike, {
+                    regEx: true,
+                    returnPath: false
+                }, this[i]);
+
+                if(item){
+                    if(all){
+                        resultSet.push(item);
+                    }else{
+                        return i;
+                    }
+                }
+            }
+            return resultSet;
+        }
+
+        this.queryAll= function(prop, valueLike, start){
+            return this.query(prop, valueLike, start, true);
+        }
 
         this.indexable= true;
 
@@ -310,14 +345,173 @@ make.indexable= function(obj){
     }
 
 };
-make.model= function(objOrFn){
-    objOrFn= make.observable(objOrFn);
-    objOrFn= make.indexable(objOrFn);
-
+/*
+make.model= function(model){
     
+    function Model(){
+        this.dt= (new Date()).getTime();
+    }
 
-    return objOrFn;
+
 };
+*/
+
+(function(){
+
+    var modelsList= {};
+
+    make.model= function(model){
+
+        var Model= new Function,
+            i= null;
+
+        for(i in model){
+            if(model.hasOwnProperty(i)){
+                Model.prototype[i]= model[i];
+                //delete model[i];
+            }
+        }
+
+        model.identifier= (new Date()).getTime();
+        modelsList[model.identifier]= [];
+
+        //Model= make.setAndGettable(Model);
+
+        model.create= function(){
+            var m= new Model();
+            
+            make.observable(m);
+            make.setAndGettable(m);
+
+            m.addSetterFilter(function(prop, val){
+                m.trigger(prop, val);
+            });
+
+            if(typeof m.constructor == 'function'){
+                m.constructor.apply(m, Array.prototype.slice.call(arguments, 0));
+            }
+
+            modelsList[model.identifier].push(m);
+
+            return m;
+        }
+    };
+
+    /* Collections */
+    make.collection= function(model){
+        
+        var oModel= model;
+
+        function Collection(model){
+
+            var curPointer= 0,
+                collectionId= model.identifier;
+
+            // making it indexable
+            make.indexable(modelsList[collectionId]);
+            
+            this.getLength= function(){
+                return modelsList[collectionId].length;
+            }
+
+            this.first= function(){
+                return modelsList[collectionId][0] || false;
+            }
+
+            this.last= function(){
+                return modelsList[collectionId][ this.getLength() -1 ] || false;
+            }
+
+            this.goTo= function(idx){
+                if(idx < 0){
+                    idx= 0;
+                }else if(idx >= this.getLength()){
+                    idx= this.getLength() -1;
+                }
+                curPointer= idx;
+                return modelsList[collectionId][idx];
+            };
+
+            this.current= function(){
+                return modelsList[collectionId][curPointer] || false;
+            }
+
+            this.currentIdx= function(){
+                return curPointer;
+            }
+            /**
+             *
+             *  while(x = people.next()){
+             *      console.log(x.name);
+             *  }
+             */
+            this.next= function(){
+                var ret= modelsList[collectionId][curPointer] || false;
+                if(ret){
+                    curPointer++;
+                }
+                return ret;
+            }
+            /**
+             *
+             *  while(x = people.prev()){
+             *      console.log(x.name);
+             *  }
+             */
+            this.prev= function(){
+                var ret= modelsList[collectionId][curPointer] || false;
+                if(ret){
+                    curPointer--;
+                }
+                return ret;
+            }
+
+            this.reset= function(){
+                curPointer= 0;
+            }
+
+            this.get= function(at){
+                return modelsList[collectionId][at] || false;
+            }
+
+            this.list= function(from, to){
+                if(from){
+                    if(to){
+                        return modelsList[collectionId].slice(from, to);
+                    }else{
+                        return modelsList[collectionId].slice(from);
+                    }
+                }else{
+                    return modelsList[collectionId]
+                }
+            };
+
+            /**
+             *
+             *  while(cur = people.query('name', 'son')){
+             *      console.log(cur.name);
+             *  }
+             */
+            this.query= function(prop, valueLike){
+                ret= modelsList[collectionId].query(prop, valueLike, curPointer);
+                if(ret !== false){
+                    curPointer= ret;
+                    ret= this.get(ret);
+                    curPointer++;
+                }
+                return ret;
+            };
+
+            this.queryAll= function(prop, valueLike){
+                return modelsList[collectionId].queryAll(prop, valueLike);
+            };
+        }
+
+        return new Collection(model);
+    };    
+
+})();
+
 (function(){
 
 
@@ -674,12 +868,14 @@ make.readonly= function(target, options){
 
     return target;
 };
+// TODO: there is a problem with making prototypes settable and its references.
+
 (function(){
 
-	make.setAndGetable= function(target, options){
+	make.setAndGettable= function(target, options){
 
 		if(typeof target == 'function'){
-			return make.setAndGetable(target.prototype, options);
+			return make.setAndGettable(target.prototype, options);
 		}
 
 		options= options || {};
@@ -752,7 +948,7 @@ make.readonly= function(target, options){
 		var i= null;
 
 		for(i in target){
-			if(target.hasOwnProperty(i)){
+			if(typeof target[i] != 'function'){
 
 				(function(target, i){
 
@@ -807,8 +1003,16 @@ make.readonly= function(target, options){
 
 		if(options.setter && !target.set && !options.specificOnly){
 			target.set= function(prop, val){
-				//target[prop]= val;
-				return target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
+				var i= null;
+				if(typeof prop == 'object'){
+					for(i in prop){
+						if(prop.hasOwnProperty(i)){
+							target['set'+(i[0].toUpperCase() + i.substring(1))](val);
+						}
+					}
+				}else{
+					return target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
+				}
 			}
 		}
 
@@ -853,201 +1057,7 @@ make.readonly= function(target, options){
 			}
 		}
 
-	};
-
-	/*
-	make.settable= function(target){
-		return make.setAndGetable(target, {
-			getter: false
-		});
-	};
-
-	make.gettable= function(target){
-		return make.setAndGetable(target, {
-			setter: false
-		});
-	};
-	*/
-	//getternsetter.js
-})();
-(function(){
-
-	make.setAndGetable= function(target, options){
-
-		if(typeof target == 'function'){
-			return make.setAndGetable(target.prototype, options);
-		}
-
-		options= options || {};
-		options.specificOnly= options.specificOnly || false,
-		options.setter= options.setter || true,
-		options.getter= options.getter || true;
-		options.filterIn= options.filterIn || false;
-		options.filterOut= options.filterOut || false;
-		options.protected= options.protected || true;
-
-		var setFilters= { '*': [] };
-		var getFilters= { '*': [] };
-
-		if(options.filterIn){
-			setFilters['*'].push(options.filterIn);
-		}
-		if(options.filterOut){
-			getFilters['*'].push(options.filterOut);
-		}
-
-		function execList(list, prop, val, oprop){
-
-			var ret= val, prevRet= ret;
-
-			if(list && list.length){
-				l= list.length;
-				for(i= 0; i<l; i++){
-					if(prop === '*'){
-						ret= list[i](oprop, ret);
-						if(ret === void 0){
-							ret= prevRet;
-						}
-					}else{
-						ret= list[i](ret);
-						if(ret === void 0){
-							ret= prevRet;
-						}
-					}
-				}
-			}
-			return ret;
-		}
-
-		function applyFiltersIn(prop, val){
-			
-			var ret= val,
-				list= setFilters[prop];
-
-			ret= execList(list, prop, val);
-
-			list= setFilters['*'];
-			ret= execList(list, '*', ret, prop);
-
-			return ret;
-		}
-
-		function applyFiltersOut(prop, val){
-			
-			var ret= val,
-				list= getFilters[prop];
-
-			ret= execList(list, prop, val);
-
-			list= getFilters['*'];
-			ret= execList(list, '*', ret, prop);
-
-			return ret;
-		}
-
-		var i= null;
-
-		for(i in target){
-			if(target.hasOwnProperty(i) && typeof target[i] != 'function'){
-
-				(function(target, i){
-
-					var value= target[i];
-					var name= i[0].toUpperCase()+i.substring(1);
-
-					if(!target['set'+name]){
-						target['set'+name]= function(val){
-							var tmp= null;
-							
-							try{
-								tmp= applyFiltersIn(i, val);
-							}catch(e){
-								// in case any filter throws an error, it will simply not apply the value;
-								return target;
-							}
-
-							if(tmp !== void 0){
-								value= tmp;
-							}
-							
-							return target;
-						};
-					}
-
-					if(!target['get'+name]){
-						target['get'+name]= function(){
-							value= applyFiltersOut(i, value);
-							return value;
-						};
-					}
-
-					if(options.protected){
-						Object.defineProperty(target, i, {
-			                enumerable: false,
-			                configurable: false,
-			                //writable: false,
-			                //value: target[i],
-			                set: function(val){
-			                	//value= val;
-			                	this['set'+name](val);
-			                	return this;
-			                },
-			                get: function(){
-			                	return this['get'+name]();
-			                }
-			            });
-					}
-				})(target, i);
-			}
-		}
-
-		if(options.setter && !target.set && !options.specificOnly){
-			target.set= function(prop, val){
-				//target[prop]= val;
-				return target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
-			}
-		}
-
-		if(options.getter && !target.get && !options.specificOnly){
-			target.get= function(prop){
-				//return target[prop];
-				return target['get'+(prop[0].toUpperCase()+prop.substring(1))]();
-			}
-		}
-
-
-		// filters
-		if(!target.addSetterFilter && options.setter){
-			target.addSetterFilter= function(prop, fn){
-
-				if(!fn){
-					fn= prop;
-					prop= '*';
-				}
-
-				if(!setFilters[prop]){
-					setFilters[prop]= [];
-				}
-				setFilters[prop].push(fn);
-				return target;
-			}
-		}
-
-		if(!target.addGetterFilter && options.getter){
-			target.addGetterFilter= function(prop, fn){
-				
-				if(!fn){
-					fn= prop;
-					prop= '*';
-				}
-
-				if(!getFilters[prop]){
-					getFilters[prop]= [];
-				}
-				getFilters[prop].push(fn);
-				return target;
-			}
-		}
+		return target;
 
 	};
 
@@ -1211,7 +1221,7 @@ make.tiable= function(objOrClass){
 	}
 
 	if(!objOrClass || (typeof objOrClass != 'object' && typeof objOrClass != 'function')){
-		throw new Error('Invalid type of object of class passed to tiable!');
+		throw new Error('Invalid type of object or class passed to tiable!');
 	}
 
 	if(objOrClass.prototype){

@@ -53,7 +53,10 @@ make.indexable= function(obj){
 
         var castEl= function(cur, i){
             i= i || '';
-            if(typeof cur == 'object' && cur.length){
+            if(typeof cur == 'object' && cur.length || i.match(/\W/) ){
+                if(isNaN(i)){
+                    i= '"'+i+'"';
+                }
                 i= '['+i+']';
             }else{
                 i= '.'+i;
@@ -115,7 +118,7 @@ make.indexable= function(obj){
             };
 
             for(i in cur){
-                if(cur.hasOwnProperty(i)){
+                if(cur.hasOwnProperty(i) && typeof cur[i] != 'function'){
                     if( compare(cur, i, search) ){
                         path.push(castEl(cur, i));
                         valueFound= cur[i];
@@ -138,7 +141,7 @@ make.indexable= function(obj){
 
             if(found && path && path.length){
                 if(opts.returnPath !== false){
-                    return path.join('').replace('.', '');
+                    return path.join('');//.replace('.', '');
                 }else{
                     return valueFound;
                 }
@@ -193,10 +196,10 @@ make.indexable= function(obj){
             });
         };
 
-        this.getAt= function(path){
+        this.getAt= function(path, node){
             var peaces= path.replace(/\[/g, '.').replace(/\]/g, '').split('.'),
                 l= peaces.length,
-                target= this;
+                target= node || this;
 
             for(var i=0; i<l; i++){
                 if(target[peaces[i]] === void 0){
@@ -206,6 +209,38 @@ make.indexable= function(obj){
             }
             return target;
         };
+
+        this.query= function(prop, valueLike, start, all){
+            if(typeof this != 'object' || this.length === void 0){
+                console.warn('Indexable must be an array to allow queries to execute');
+                return target;
+            }
+            var i= start || 0,
+                l= this.length,
+                item= null,
+                resultSet= [];
+
+            for(; i<l; i++){
+                //console.log(this[i]);
+                item= this.find(valueLike, {
+                    regEx: true,
+                    returnPath: false
+                }, this[i]);
+
+                if(item){
+                    if(all){
+                        resultSet.push(item);
+                    }else{
+                        return i;
+                    }
+                }
+            }
+            return resultSet;
+        }
+
+        this.queryAll= function(prop, valueLike, start){
+            return this.query(prop, valueLike, start, true);
+        }
 
         this.indexable= true;
 

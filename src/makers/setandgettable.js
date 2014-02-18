@@ -1,9 +1,11 @@
+// TODO: there is a problem with making prototypes settable and its references.
+
 (function(){
 
-	make.setAndGetable= function(target, options){
+	make.setAndGettable= function(target, options){
 
 		if(typeof target == 'function'){
-			return make.setAndGetable(target.prototype, options);
+			return make.setAndGettable(target.prototype, options);
 		}
 
 		options= options || {};
@@ -76,7 +78,7 @@
 		var i= null;
 
 		for(i in target){
-			if(target.hasOwnProperty(i) && typeof target[i] != 'function'){
+			if(typeof target[i] != 'function'){
 
 				(function(target, i){
 
@@ -131,8 +133,16 @@
 
 		if(options.setter && !target.set && !options.specificOnly){
 			target.set= function(prop, val){
-				//target[prop]= val;
-				return target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
+				var i= null;
+				if(typeof prop == 'object'){
+					for(i in prop){
+						if(prop.hasOwnProperty(i)){
+							target['set'+(i[0].toUpperCase() + i.substring(1))](val);
+						}
+					}
+				}else{
+					return target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
+				}
 			}
 		}
 
@@ -176,6 +186,8 @@
 				return target;
 			}
 		}
+
+		return target;
 
 	};
 

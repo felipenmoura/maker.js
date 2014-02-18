@@ -94,7 +94,7 @@ make.tiable= function(objOrClass){
 	}
 
 	if(!objOrClass || (typeof objOrClass != 'object' && typeof objOrClass != 'function')){
-		throw new Error('Invalid type of object of class passed to tiable!');
+		throw new Error('Invalid type of object or class passed to tiable!');
 	}
 
 	if(objOrClass.prototype){
