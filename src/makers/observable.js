@@ -248,7 +248,9 @@
         };
         //}
 
-        this.observable= true;
+        if(!this.observable){
+            this.observable= true;
+        }
 
         return this;
     };

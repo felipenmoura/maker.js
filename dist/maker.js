@@ -568,7 +568,9 @@ make.model= function(objOrFn){
         };
         //}
 
-        this.observable= true;
+        if(!this.observable){
+            this.observable= true;
+        }
 
         return this;
     };
