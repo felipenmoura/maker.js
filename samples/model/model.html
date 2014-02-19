@@ -15,14 +15,81 @@
         <script src='../../dist/maker.js'></script>
 
         <script id='sampleCode'>
-        var o= {
-            name: 'felipe',
-            age: 28
-        };
-        
-        make.model(o);
 
-        console.log(o);
+        // create your object(s) to become model
+        var person= {
+            name: '',
+            age: -1,
+            run: function(distance){
+                console.lot('running '+distance+' kms');
+            },
+            oncreate: function(name, age){
+                
+                if(name){
+                    this.setName(name);
+                }
+                if(age){
+                    this.setAge(age);
+                }
+            }
+        };
+
+        // make it a model
+        make.model(person);
+
+        // set and get properties
+        var p1= person.create();
+        p1.setName('Felipe').setAge(28);
+        var p2= person.create('Jason', 98);
+        var p3= person.create('Franson', 32);            
+
+        console.log(p1, p2, p3);
+
+        // use collections of your models
+        var people= make.collection(person);
+
+        console.log('PEOPLE');
+        console.log(1, people.list(), people.getLength());
+        // then use it
+        console.log(2, people.first());
+        console.log(3, people.last().getName());
+        console.log(4, people.get(1).getAge());
+        console.log('-----------------------------');
+        while(x = people.next()){
+            console.log(5, x, x.getName());
+        }
+        people.reset();
+        console.log('-----------------------------');
+        while(cur = people.query('name', 'son')){
+            console.log(6, cur.getName());
+        }
+        console.log('-----------------------------');
+
+        /* another example */
+        console.log('CAR');
+
+        var car= {
+            factory: '',
+            color: 0,
+            plate: null
+        };
+
+        make.model(car);
+
+        var c1= car.create();
+        var c2= car.create();
+        var c3= car.create();
+
+        c1.set({ factory: 'ford', color: 'gray', plate: 'ABC 123' });
+        c2.set({ factory: 'peugeot', color: 'blue', plate: 'DEF 456' });
+        c3.set('factory', 'ferrari').setColor('red').setPlate('FER 461');
+
+        var store= make.collection(car);
+
+        console.log(1, store.list(), store.getLength());
+        console.log(2, c1.getFactory());
+        console.log(3, c2.factory);
+        console.log(4, c3.get('factory'));
 
         </script>
 

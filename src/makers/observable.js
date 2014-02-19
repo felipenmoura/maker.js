@@ -20,10 +20,6 @@
 
         observed= observed.name || observed.id || observed.toString().substring(0, 30);
 
-        var observerOptions= {
-                recursive: false
-            };
-
         // Starting private variables
         var self= this,
             originalSet= null,
@@ -205,6 +201,9 @@
         }
 
         this.addSetterFilter(function(prop, val){
+            if(observerOpts && observerOpts.recursive && typeof val == 'object' && !val.length){
+                make.observable(val, observerOpts);
+            }
             self.trigger(prop, val);
             return val;
         });
@@ -254,8 +253,8 @@
         };
         //}
 
-        if(!this.observable){
-            this.observable= true;
+        if(!this.__makeObservable){
+            this.__makeObservable= true;
         }
 
         return this;
@@ -275,7 +274,7 @@
             observerOpts.recursive !== false &&
             target != make){
             for(i in target){
-                if(target[i] && !target[i].observable && typeof target[i] == 'object' && !target[i].length){
+                if(target[i] && !target[i].__makeObservable && typeof target[i] == 'object' && !target[i].length){
                     // is an object, but not null neither array
                     make.observable(target[i], observerOpts);
                 }

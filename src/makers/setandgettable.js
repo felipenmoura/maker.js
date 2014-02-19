@@ -17,6 +17,7 @@
 		options.filterIn= options.filterIn || false;
 		options.filterOut= options.filterOut || false;
 		options.protected= options.protected || true;
+		options.allowNewSetters= options.allowNewSetters || true;
 
 		var setFilters= { '*': [] };
 		var getFilters= { '*': [] };
@@ -30,7 +31,7 @@
 
 		function execList(list, prop, val, oprop){
 
-			var ret= val, prevRet= ret;
+			var ret= val, prevRet= ret, l= 0;
 
 			if(list && list.length){
 				l= list.length;
@@ -77,69 +78,67 @@
 			return ret;
 		}
 
-		var i= null;
+		function createSetterAndGetter(target, i, isPrototypeOf){
+			
+			var value= target[i];
+			var name= i[0].toUpperCase() + i.substring(1);
 
-		for(i in target){
-			if(typeof target[i] != 'function'){
+			if(!target['set'+name]){
+				target['set'+name]= function(val){
 
-				(function(target, i, isPrototypeOf){
-					//debugger;
-					var value= target[i];
-					var name= i[0].toUpperCase() + i.substring(1);
-
-					if(!target['set'+name]){
-						target['set'+name]= function(val){
-
-							if(!this.__makeSetGetValue){
-								this.__makeSetGetValue= {};
-							}
-
-							var tmp= null;
-							
-							try{
-								tmp= applyFiltersIn(i, val);
-							}catch(e){
-								// in case any filter throws an error, it will simply not apply the value;
-								return target;
-							}
-
-							if(tmp !== void 0){
-								if(options.isPrototypeOf){
-									this.__makeSetGetValue[i]= tmp;
-								}else{
-									value= tmp;
-								}
-							}
-							
-							return this;
-						};
+					if(!this.__makeSetGetValue){
+						this.__makeSetGetValue= {};
 					}
 
-					if(!target['get'+name] && name.substring(0, 6) != '__make'){
-						target['get'+name]= function(){
-							var v= null;
-							if(options.isPrototypeOf){
-								if(!this.__makeSetGetValue){
-									this.__makeSetGetValue= {};
-								}
-								v= this.__makeSetGetValue[i];
-							}else{
-								v= value;
-							}
-							v= applyFiltersOut(i, v);
-							return v;
-						};
+					var tmp= null;
+					
+					try{
+						tmp= applyFiltersIn(i, val);
+					}catch(e){
+						// in case any filter throws an error, it will simply not apply the value;
+						return target;
 					}
 
+					if(tmp !== void 0){
+						if(options.isPrototypeOf){
+							this.__makeSetGetValue[i]= tmp;
+						}else{
+							value= tmp;
+						}
+					}
+					
+					return this;
+				};
+			}
+
+			if(!target['get'+name] && name.substring(0, 6) != '__make'){
+				target['get'+name]= function(){
+					var v= null;
 					if(options.isPrototypeOf){
-						
+						if(!this.__makeSetGetValue){
+							this.__makeSetGetValue= {};
+						}
+						v= this.__makeSetGetValue[i];
+					}else{
+						v= value;
+					}
+					v= applyFiltersOut(i, v);
+
+					if(v === void 0 && value !== void 0){
+						return value;
 					}
 
-					if(options.protected && name.substring(0, 6) != '__make'){
+					return v;
+				};
+			}
+
+			if(name.substring(0, 6) != '__make'){
+				if(options.protected){
+					try{
 						Object.defineProperty(target, i, {
 			                enumerable: true,
-			                configurable: false,
-			                //writable: false,
+			                configurable: true,
+			                //writable: true,
 			                //value: target[i],
 			                set: function(val){
 			                	//value= val;
@@ -150,8 +149,21 @@
 			                	return this['get'+name]();
 			                }
 			            });
+					}catch(e){
+						// could not define a property...
+						// we shall ignore it, because it is probably happening
+						// because it was already defined.
 					}
-				})(target, i, options.isPrototypeOf);
+				}
+
+			}
+		}
+
+		var i= null;
+
+		for(i in target){
+			if(typeof target[i] != 'function'){
+				createSetterAndGetter(target, i, options.isPrototypeOf);
 			}
 		}
 
@@ -164,25 +176,32 @@
 					for(i in prop){
 						if(prop.hasOwnProperty(i)){
 							name= 'set'+(i[0].toUpperCase() + i.substring(1));
-							if(this[name]){
-								this[name](prop[i]);
-							}else{
-								if(!options.protected){
-									this[i]= prop[i];
-								}
+							if(!this[name] && (options.allowNewSetters || !options.protected)) {
+								createSetterAndGetter(target, i, options.isPrototypeOf);
 							}
+							this[name](prop[i]);
 						}
 					}
 					return this;
 				}else{
-					return target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
+					name = 'set'+(prop[0].toUpperCase()+prop.substring(1));
+					if(!this[name] && (options.allowNewSetters || !options.protected)) {
+						createSetterAndGetter(target, prop, options.isPrototypeOf);
+						return this[name](val);
+					}
+					return target[name](val);
 				}
 			}
 		}
 
 		if(options.getter && !options.specificOnly){
 			target.get= function(prop){
-				return target['get'+(prop[0].toUpperCase()+prop.substring(1))]();
+				var name= 'get'+(prop[0].toUpperCase()+prop.substring(1));
+				
+				if(!target[name]){
+					createSetterAndGetter(target, prop, options.isPrototypeOf);
+				}
+				return this[name]();
 			}
 		}
 
@@ -219,6 +238,8 @@
 				return this;
 			}
 		}
+
+		target.__makeSetAndGettable= true;
 
 		return target;
 
