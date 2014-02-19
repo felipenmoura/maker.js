@@ -29,7 +29,7 @@
             originalSet= null,
             indexOf= function(trigger, obj){
                 var i = 0;
-                trigger= self.observing[trigger] || [];
+                trigger= self.__makeObserving[trigger] || [];
 
                 while(i < trigger.length){
                     if(trigger[i] === obj){
@@ -41,7 +41,7 @@
             };
 
         // preparing the list with its default object
-        self.observing= {"*": []};
+        self.__makeObserving= {"*": []};
 
         /**
          * Starts listening to events
@@ -54,15 +54,12 @@
          * @param Function The listener callback.
          * @example
          *
-         *      zaz.use(function(pkg){
-         *
          *          var o = pkg.context.user; // contexts are observable
          *          o.on('lang', function(newLang){
          *              // everytime lang is changed in user context
          *              alert('The lang in user context was changed to ' + newLang);
          *          });
          *
-         *      });
          */
         this.on= function(trigger, fn){
             if(!fn){
@@ -72,12 +69,12 @@
                 throw new Error('observer:Invalid listener!\nWhen adding listeners to observables, it is supposed to receive a function as callback.');
             }
             if(typeof trigger == 'string'){
-                if(!self.observing[trigger]){
-                    self.observing[trigger]= [];
+                if(!self.__makeObserving[trigger]){
+                    self.__makeObserving[trigger]= [];
                 }
-                self.observing[trigger].push(fn);
+                self.__makeObserving[trigger].push(fn);
             }else{
-                self.observing['*'].push(fn);
+                self.__makeObserving['*'].push(fn);
             }
             return this;
         };
@@ -176,7 +173,7 @@
                 fn= trigger;
                 trigger= '*';
             }
-            self.observing[trigger].splice(indexOf(trigger, fn), 1);
+            self.__makeObserving[trigger].splice(indexOf(trigger, fn), 1);
             return this;
         };
 
@@ -192,7 +189,7 @@
          * @param Mixed The value to be stored at the property.
          * @chainable
          */
-        originalSet= this.set;
+        /*originalSet= this.set;
         this.set= function(prop, val){
             if(originalSet){
                 originalSet.apply(this, Array.prototype.slice.call(arguments, 0));
@@ -201,7 +198,16 @@
             }
             this.trigger(prop, val);
             return this;
-        };
+        };*/
+
+        if(!this.settable){
+            make.setAndGettable(this);
+        }
+
+        this.addSetterFilter(function(prop, val){
+            self.trigger(prop, val);
+            return val;
+        });
 
         //if(observerOpts.canTrigger){
         /**
@@ -221,7 +227,7 @@
                 trigger= '*';
             }
 
-            list= (self.observing[trigger])? self.observing[trigger]: [];
+            list= (self.__makeObserving[trigger])? self.__makeObserving[trigger]: [];
             l= list.length;
 
             for(; i<l; i++){

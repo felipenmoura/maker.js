@@ -4,11 +4,13 @@
 
 	make.setAndGettable= function(target, options){
 
+		options= options || {};
+
 		if(typeof target == 'function'){
+			options.isPrototypeOf= target;
 			return make.setAndGettable(target.prototype, options);
 		}
 
-		options= options || {};
 		options.specificOnly= options.specificOnly || false,
 		options.setter= options.setter || true,
 		options.getter= options.getter || true;
@@ -80,13 +82,18 @@
 		for(i in target){
 			if(typeof target[i] != 'function'){
 
-				(function(target, i){
-
+				(function(target, i, isPrototypeOf){
+					//debugger;
 					var value= target[i];
-					var name= i[0].toUpperCase()+i.substring(1);
+					var name= i[0].toUpperCase() + i.substring(1);
 
 					if(!target['set'+name]){
 						target['set'+name]= function(val){
+
+							if(!this.__makeSetGetValue){
+								this.__makeSetGetValue= {};
+							}
+
 							var tmp= null;
 							
 							try{
@@ -97,23 +104,40 @@
 							}
 
 							if(tmp !== void 0){
-								value= tmp;
+								if(options.isPrototypeOf){
+									this.__makeSetGetValue[i]= tmp;
+								}else{
+									value= tmp;
+								}
 							}
 							
-							return target;
+							return this;
 						};
 					}
 
-					if(!target['get'+name]){
+					if(!target['get'+name] && name.substring(0, 6) != '__make'){
 						target['get'+name]= function(){
-							value= applyFiltersOut(i, value);
-							return value;
+							var v= null;
+							if(options.isPrototypeOf){
+								if(!this.__makeSetGetValue){
+									this.__makeSetGetValue= {};
+								}
+								v= this.__makeSetGetValue[i];
+							}else{
+								v= value;
+							}
+							v= applyFiltersOut(i, v);
+							return v;
 						};
 					}
 
-					if(options.protected){
+					if(options.isPrototypeOf){
+						
+					}
+
+					if(options.protected && name.substring(0, 6) != '__make'){
 						Object.defineProperty(target, i, {
-			                enumerable: false,
+			                enumerable: true,
 			                configurable: false,
 			                //writable: false,
 			                //value: target[i],
@@ -127,28 +151,37 @@
 			                }
 			            });
 					}
-				})(target, i);
+				})(target, i, options.isPrototypeOf);
 			}
 		}
 
-		if(options.setter && !target.set && !options.specificOnly){
+		if(options.setter && !options.specificOnly){
 			target.set= function(prop, val){
-				var i= null;
+				var i= null,
+					name= '';
+
 				if(typeof prop == 'object'){
 					for(i in prop){
 						if(prop.hasOwnProperty(i)){
-							target['set'+(i[0].toUpperCase() + i.substring(1))](val);
+							name= 'set'+(i[0].toUpperCase() + i.substring(1));
+							if(this[name]){
+								this[name](prop[i]);
+							}else{
+								if(!options.protected){
+									this[i]= prop[i];
+								}
+							}
 						}
 					}
+					return this;
 				}else{
 					return target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
 				}
 			}
 		}
 
-		if(options.getter && !target.get && !options.specificOnly){
+		if(options.getter && !options.specificOnly){
 			target.get= function(prop){
-				//return target[prop];
 				return target['get'+(prop[0].toUpperCase()+prop.substring(1))]();
 			}
 		}
@@ -167,7 +200,7 @@
 					setFilters[prop]= [];
 				}
 				setFilters[prop].push(fn);
-				return target;
+				return this;
 			}
 		}
 
@@ -183,7 +216,7 @@
 					getFilters[prop]= [];
 				}
 				getFilters[prop].push(fn);
-				return target;
+				return this;
 			}
 		}
 

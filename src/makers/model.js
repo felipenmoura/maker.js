@@ -1,47 +1,43 @@
-/*
-make.model= function(model){
-    
-    function Model(){
-        this.dt= (new Date()).getTime();
-    }
-
-
-};
-*/
-
 (function(){
 
     var modelsList= {};
 
     make.model= function(model){
 
-        var Model= new Function,
+        var Model= function(){},
             i= null;
 
         for(i in model){
             if(model.hasOwnProperty(i)){
                 Model.prototype[i]= model[i];
-                //delete model[i];
             }
         }
+
+        Model= make.tiable(Model);
 
         model.identifier= (new Date()).getTime();
         modelsList[model.identifier]= [];
 
-        //Model= make.setAndGettable(Model);
-
         model.create= function(){
-            var m= new Model();
             
-            make.observable(m);
-            make.setAndGettable(m);
+            var m= new Model();
+            /*for(i in model){
+                if(model.hasOwnProperty(i)){
+                    m[i]= model[i];
+                }
+            }*/
+            
+            //make.observable(m);
+            //make.setAndGettable(m);
+            //console.log(m);
+            //make.tiable(m);
 
             m.addSetterFilter(function(prop, val){
                 m.trigger(prop, val);
             });
-
-            if(typeof m.constructor == 'function'){
-                m.constructor.apply(m, Array.prototype.slice.call(arguments, 0));
+            
+            if(typeof m.oncreate == 'function'){
+                m.oncreate.apply(m, Array.prototype.slice.call(arguments, 0));
             }
 
             modelsList[model.identifier].push(m);
@@ -135,7 +131,7 @@ make.model= function(model){
                         return modelsList[collectionId].slice(from);
                     }
                 }else{
-                    return modelsList[collectionId]
+                    return modelsList[collectionId].slice();
                 }
             };
 

@@ -229,7 +229,7 @@ make.indexable= function(obj){
 
                 if(item){
                     if(all){
-                        resultSet.push(item);
+                        resultSet.push(this[i]);
                     }else{
                         return i;
                     }
