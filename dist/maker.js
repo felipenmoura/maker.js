@@ -1,5 +1,25 @@
 
 make= {};
+
+make.cleanUpProperties= function(obj, doNotRemoveMethods){
+
+    var i = null,
+        newObj= {};
+
+    for(i in obj){
+        if(i.substring(0,6) != '__make'){
+            if(doNotRemoveMethods || typeof obj[i] != 'function'){
+                if(typeof obj[i] == 'object'){
+                    newObj[i]= make.cleanUpProperties(obj[i], doNotRemoveMethods);
+                }else{
+                    newObj[i]= obj[i];
+                }
+            }
+        }
+    }
+
+    return newObj;
+}
 make.debounce= function(target, options){
 
 	if(typeof target != 'object' && typeof target != 'function'){
@@ -107,7 +127,10 @@ make.indexable= function(obj){
 
         var castEl= function(cur, i){
             i= i || '';
-            if(typeof cur == 'object' && cur.length){
+            if(typeof cur == 'object' && cur.length || i.match(/\W/) ){
+                if(isNaN(i)){
+                    i= '"'+i+'"';
+                }
                 i= '['+i+']';
             }else{
                 i= '.'+i;
@@ -156,7 +179,7 @@ make.indexable= function(obj){
                 }else{
                     val= target[key];
                 }
-                val= val.valueOf() || '';
+                val= val.valueOf? val.valueOf() : '';
 
                 try{
                     if( (val.match && val.match(search)) || val == oSearch ){
@@ -169,7 +192,7 @@ make.indexable= function(obj){
             };
 
             for(i in cur){
-                if(cur.hasOwnProperty(i)){
+                if(!cur.nodeType && cur.hasOwnProperty(i) && typeof cur[i] != 'function'){
                     if( compare(cur, i, search) ){
                         path.push(castEl(cur, i));
                         valueFound= cur[i];
@@ -192,7 +215,7 @@ make.indexable= function(obj){
 
             if(found && path && path.length){
                 if(opts.returnPath !== false){
-                    return path.join('').replace('.', '');
+                    return path.join('');//.replace('.', '');
                 }else{
                     return valueFound;
                 }
@@ -247,10 +270,10 @@ make.indexable= function(obj){
             });
         };
 
-        this.getAt= function(path){
+        this.getAt= function(path, node){
             var peaces= path.replace(/\[/g, '.').replace(/\]/g, '').split('.'),
                 l= peaces.length,
-                target= this;
+                target= node || this;
 
             for(var i=0; i<l; i++){
                 if(target[peaces[i]] === void 0){
@@ -260,6 +283,38 @@ make.indexable= function(obj){
             }
             return target;
         };
+
+        this.query= function(prop, valueLike, start, all){
+            if(typeof this != 'object' || this.length === void 0){
+                console.warn('Indexable must be an array to allow queries to execute');
+                return target;
+            }
+            var i= start || 0,
+                l= this.length,
+                item= null,
+                resultSet= [];
+
+            for(; i<l; i++){
+                //console.log(this[i]);
+                item= this.find(valueLike, {
+                    regEx: true,
+                    returnPath: false
+                }, this[i]);
+
+                if(item){
+                    if(all){
+                        resultSet.push(this[i]);
+                    }else{
+                        return i;
+                    }
+                }
+            }
+            return resultSet;
+        }
+
+        this.queryAll= function(prop, valueLike, start){
+            return this.query(prop, valueLike, start, true);
+        }
 
         this.indexable= true;
 
@@ -275,14 +330,169 @@ make.indexable= function(obj){
     }
 
 };
-make.model= function(objOrFn){
-    objOrFn= make.observable(objOrFn);
-    objOrFn= make.indexable(objOrFn);
+(function(){
 
-    
+    var modelsList= {};
 
-    return objOrFn;
-};
+    make.model= function(model){
+
+        var Model= function(){},
+            i= null;
+
+        for(i in model){
+            if(model.hasOwnProperty(i)){
+                Model.prototype[i]= model[i];
+            }
+        }
+
+        Model= make.tiable(Model);
+
+        model.identifier= (new Date()).getTime();
+        modelsList[model.identifier]= [];
+
+        model.create= function(){
+            
+            var m= new Model();
+            /*for(i in model){
+                if(model.hasOwnProperty(i)){
+                    m[i]= model[i];
+                }
+            }*/
+            
+            //make.observable(m);
+            //make.setAndGettable(m);
+            //console.log(m);
+            //make.tiable(m);
+
+            m.addSetterFilter(function(prop, val){
+                m.trigger(prop, val);
+            });
+            
+            if(typeof m.oncreate == 'function'){
+                m.oncreate.apply(m, Array.prototype.slice.call(arguments, 0));
+            }
+
+            modelsList[model.identifier].push(m);
+
+            return m;
+        }
+    };
+
+    /* Collections */
+    make.collection= function(model){
+        
+        var oModel= model;
+
+        function Collection(model){
+
+            var curPointer= 0,
+                collectionId= model.identifier;
+
+            // making it indexable
+            make.indexable(modelsList[collectionId]);
+            
+            this.getLength= function(){
+                return modelsList[collectionId].length;
+            }
+
+            this.first= function(){
+                return modelsList[collectionId][0] || false;
+            }
+
+            this.last= function(){
+                return modelsList[collectionId][ this.getLength() -1 ] || false;
+            }
+
+            this.goTo= function(idx){
+                if(idx < 0){
+                    idx= 0;
+                }else if(idx >= this.getLength()){
+                    idx= this.getLength() -1;
+                }
+                curPointer= idx;
+                return modelsList[collectionId][idx];
+            };
+
+            this.current= function(){
+                return modelsList[collectionId][curPointer] || false;
+            }
+
+            this.currentIdx= function(){
+                return curPointer;
+            }
+            /**
+             *
+             *  while(x = people.next()){
+             *      console.log(x.name);
+             *  }
+             */
+            this.next= function(){
+                var ret= modelsList[collectionId][curPointer] || false;
+                if(ret){
+                    curPointer++;
+                }
+                return ret;
+            }
+            /**
+             *
+             *  while(x = people.prev()){
+             *      console.log(x.name);
+             *  }
+             */
+            this.prev= function(){
+                var ret= modelsList[collectionId][curPointer] || false;
+                if(ret){
+                    curPointer--;
+                }
+                return ret;
+            }
+
+            this.reset= function(){
+                curPointer= 0;
+            }
+
+            this.get= function(at){
+                return modelsList[collectionId][at] || false;
+            }
+
+            this.list= function(from, to){
+                if(from){
+                    if(to){
+                        return modelsList[collectionId].slice(from, to);
+                    }else{
+                        return modelsList[collectionId].slice(from);
+                    }
+                }else{
+                    return modelsList[collectionId].slice();
+                }
+            };
+
+            /**
+             *
+             *  while(cur = people.query('name', 'son')){
+             *      console.log(cur.name);
+             *  }
+             */
+            this.query= function(prop, valueLike){
+                ret= modelsList[collectionId].query(prop, valueLike, curPointer);
+                if(ret !== false){
+                    curPointer= ret;
+                    ret= this.get(ret);
+                    curPointer++;
+                }
+                return ret;
+            };
+
+            this.queryAll= function(prop, valueLike){
+                return modelsList[collectionId].queryAll(prop, valueLike);
+            };
+        }
+
+        return new Collection(model);
+    };    
+
+})();
+
 (function(){
 
 
@@ -305,16 +515,12 @@ make.model= function(objOrFn){
 
         observed= observed.name || observed.id || observed.toString().substring(0, 30);
 
-        var observerOptions= {
-                recursive: false
-            };
-
         // Starting private variables
         var self= this,
             originalSet= null,
             indexOf= function(trigger, obj){
                 var i = 0;
-                trigger= self.observing[trigger] || [];
+                trigger= self.__makeObserving[trigger] || [];
 
                 while(i < trigger.length){
                     if(trigger[i] === obj){
@@ -326,7 +532,7 @@ make.model= function(objOrFn){
             };
 
         // preparing the list with its default object
-        self.observing= {"*": []};
+        self.__makeObserving= {"*": []};
 
         /**
          * Starts listening to events
@@ -339,15 +545,12 @@ make.model= function(objOrFn){
          * @param Function The listener callback.
          * @example
          *
-         *      zaz.use(function(pkg){
-         *
          *          var o = pkg.context.user; // contexts are observable
          *          o.on('lang', function(newLang){
          *              // everytime lang is changed in user context
          *              alert('The lang in user context was changed to ' + newLang);
          *          });
          *
-         *      });
          */
         this.on= function(trigger, fn){
             if(!fn){
@@ -357,12 +560,12 @@ make.model= function(objOrFn){
                 throw new Error('observer:Invalid listener!\nWhen adding listeners to observables, it is supposed to receive a function as callback.');
             }
             if(typeof trigger == 'string'){
-                if(!self.observing[trigger]){
-                    self.observing[trigger]= [];
+                if(!self.__makeObserving[trigger]){
+                    self.__makeObserving[trigger]= [];
                 }
-                self.observing[trigger].push(fn);
+                self.__makeObserving[trigger].push(fn);
             }else{
-                self.observing['*'].push(fn);
+                self.__makeObserving['*'].push(fn);
             }
             return this;
         };
@@ -461,7 +664,7 @@ make.model= function(objOrFn){
                 fn= trigger;
                 trigger= '*';
             }
-            self.observing[trigger].splice(indexOf(trigger, fn), 1);
+            self.__makeObserving[trigger].splice(indexOf(trigger, fn), 1);
             return this;
         };
 
@@ -477,7 +680,7 @@ make.model= function(objOrFn){
          * @param Mixed The value to be stored at the property.
          * @chainable
          */
-        originalSet= this.set;
+        /*originalSet= this.set;
         this.set= function(prop, val){
             if(originalSet){
                 originalSet.apply(this, Array.prototype.slice.call(arguments, 0));
@@ -486,7 +689,21 @@ make.model= function(objOrFn){
             }
             this.trigger(prop, val);
             return this;
-        };
+        };*/
+
+        if(!observerOpts.onlyByTrigger){
+            if(!this.settable){
+                make.setAndGettable(this);
+            }
+
+            this.addSetterFilter(function(prop, val){
+                if(observerOpts && observerOpts.recursive && typeof val == 'object' && !val.length){
+                    make.observable(val, observerOpts);
+                }
+                self.trigger(prop, val);
+                return val;
+            });
+        }
 
         //if(observerOpts.canTrigger){
         /**
@@ -506,7 +723,7 @@ make.model= function(objOrFn){
                 trigger= '*';
             }
 
-            list= (self.observing[trigger])? self.observing[trigger]: [];
+            list= (self.__makeObserving[trigger])? self.__makeObserving[trigger]: [];
             l= list.length;
 
             for(; i<l; i++){
@@ -533,11 +750,13 @@ make.model= function(objOrFn){
         };
         //}
 
-        this.observable= true;
+        if(!this.__makeObservable){
+            this.__makeObservable= true;
+        }
 
         return this;
     };
-    
+
     make.observable= function(target, observerOpts){
 
         var i= null;
@@ -552,7 +771,7 @@ make.model= function(objOrFn){
             observerOpts.recursive !== false &&
             target != make){
             for(i in target){
-                if(target[i] && !target[i].observable && typeof target[i] == 'object' && !target[i].length){
+                if(target[i] && !target[i].__makeObservable && typeof target[i] == 'object' && !target[i].length){
                     // is an object, but not null neither array
                     make.observable(target[i], observerOpts);
                 }
@@ -637,21 +856,26 @@ make.readonly= function(target, options){
 
     return target;
 };
+// TODO: there is a problem with making prototypes settable and its references.
+
 (function(){
 
-	make.setAndGetable= function(target, options){
-
-		if(typeof target == 'function'){
-			return make.setAndGetable(target.prototype, options);
-		}
+	make.setAndGettable= function(target, options){
 
 		options= options || {};
+
+		if(typeof target == 'function'){
+			options.isPrototypeOf= target;
+			return make.setAndGettable(target.prototype, options);
+		}
+
 		options.specificOnly= options.specificOnly || false,
 		options.setter= options.setter || true,
 		options.getter= options.getter || true;
 		options.filterIn= options.filterIn || false;
 		options.filterOut= options.filterOut || false;
 		options.protected= options.protected || true;
+		options.allowNewSetters= options.allowNewSetters || true;
 
 		var setFilters= { '*': [] };
 		var getFilters= { '*': [] };
@@ -665,7 +889,7 @@ make.readonly= function(target, options){
 
 		function execList(list, prop, val, oprop){
 
-			var ret= val, prevRet= ret;
+			var ret= val, prevRet= ret, l= 0;
 
 			if(list && list.length){
 				l= list.length;
@@ -712,47 +936,78 @@ make.readonly= function(target, options){
 			return ret;
 		}
 
-		var i= null;
+		function verifySetAndGetValue(that){
+			if(!that.__makeSetGetValue){
 
-		for(i in target){
-			if(target.hasOwnProperty(i)){
+				if(make.__isIE8){
+					// need to be treated differently
+					//var DOMElRef= document.createElement('makeDOMElement');
+					//that.__makeSetGetDOMWorkAroundForIE8= DOMElRef;
 
-				(function(target, i){
+				}else{}
 
-					var value= target[i];
-					var name= i[0].toUpperCase()+i.substring(1);
+				that.__makeSetGetValue= {};
+			}
+		}
 
-					if(!target['set'+name]){
-						target['set'+name]= function(val){
-							var tmp= null;
-							
-							try{
-								tmp= applyFiltersIn(i, val);
-							}catch(e){
-								// in case any filter throws an error, it will simply not apply the value;
-								return target;
-							}
+		function createSetterAndGetter(target, i, isPrototypeOf){
+			
+			var value= target[i];
+			var name= i[0].toUpperCase() + i.substring(1);
 
-							if(tmp !== void 0){
-								value= tmp;
-							}
-							
-							return target;
-						};
+			if(!target['set'+name]){
+				target['set'+name]= function(val){
+
+					verifySetAndGetValue(this);
+
+					var tmp= null;
+					
+					try{
+						tmp= applyFiltersIn(i, val);
+					}catch(e){
+						// in case any filter throws an error, it will simply not apply the value;
+						return target;
 					}
 
-					if(!target['get'+name]){
-						target['get'+name]= function(){
-							value= applyFiltersOut(i, value);
-							return value;
-						};
+					if(tmp !== void 0){
+						if(options.isPrototypeOf){
+							this.__makeSetGetValue[i]= tmp;
+						}else{
+							value= tmp;
+						}
+					}
+					
+					return this;
+				};
+			}
+
+			if(!target['get'+name] && name.substring(0, 6) != '__make'){
+				target['get'+name]= function(){
+					var v= null;
+					if(options.isPrototypeOf){
+						verifySetAndGetValue(this);
+						
+						v= this.__makeSetGetValue[i];
+					}else{
+						v= value;
+					}
+					v= applyFiltersOut(i, v);
+
+					if(v === void 0 && value !== void 0){
+						return value;
 					}
 
-					if(options.protected){
+					return v;
+				};
+			}
+
+			if(name.substring(0, 6) != '__make'){
+				if(options.protected){
+					try{
 						Object.defineProperty(target, i, {
-			                enumerable: false,
-			                configurable: false,
-			                //writable: false,
+			                enumerable: true,
+			                configurable: true,
+			                //writable: true,
 			                //value: target[i],
 			                set: function(val){
 			                	//value= val;
@@ -763,22 +1018,59 @@ make.readonly= function(target, options){
 			                	return this['get'+name]();
 			                }
 			            });
+					}catch(e){
+						// could not define a property...
+						// we shall ignore it, because it is probably happening
+						// because it was already defined.
 					}
-				})(target, i);
+				}
+
 			}
 		}
 
-		if(options.setter && !target.set && !options.specificOnly){
+		var i= null;
+
+		for(i in target){
+			if(typeof target[i] != 'function'){
+				createSetterAndGetter(target, i, options.isPrototypeOf);
+			}
+		}
+
+		if(options.setter && !options.specificOnly){
 			target.set= function(prop, val){
-				//target[prop]= val;
-				return target['set'+(prop[0].toUpperCase()+prop.substring(1))](val);
+				var i= null,
+					name= '';
+
+				if(typeof prop == 'object'){
+					for(i in prop){
+						if(prop.hasOwnProperty(i)){
+							name= 'set'+(i[0].toUpperCase() + i.substring(1));
+							if(!this[name] && (options.allowNewSetters || !options.protected)) {
+								createSetterAndGetter(target, i, options.isPrototypeOf);
+							}
+							this[name](prop[i]);
+						}
+					}
+					return this;
+				}else{
+					name = 'set'+(prop[0].toUpperCase()+prop.substring(1));
+					if(!this[name] && (options.allowNewSetters || !options.protected)) {
+						createSetterAndGetter(target, prop, options.isPrototypeOf);
+						return this[name](val);
+					}
+					return target[name](val);
+				}
 			}
 		}
 
-		if(options.getter && !target.get && !options.specificOnly){
+		if(options.getter && !options.specificOnly){
 			target.get= function(prop){
-				//return target[prop];
-				return target['get'+(prop[0].toUpperCase()+prop.substring(1))]();
+				var name= 'get'+(prop[0].toUpperCase()+prop.substring(1));
+				
+				if(!target[name]){
+					createSetterAndGetter(target, prop, options.isPrototypeOf);
+				}
+				return this[name]();
 			}
 		}
 
@@ -796,7 +1088,7 @@ make.readonly= function(target, options){
 					setFilters[prop]= [];
 				}
 				setFilters[prop].push(fn);
-				return target;
+				return this;
 			}
 		}
 
@@ -812,9 +1104,13 @@ make.readonly= function(target, options){
 					getFilters[prop]= [];
 				}
 				getFilters[prop].push(fn);
-				return target;
+				return this;
 			}
 		}
+
+		target.__makeSetAndGettable= true;
+
+		return target;
 
 	};
 
@@ -956,12 +1252,15 @@ make.tiable= function(objOrClass){
 			return val;
 		}
 
-		make.setAndGetable(this, {
+//		debugger;
+		make.observable(this/*, {
 			//specificOnly: true,
 			getter: false,
 			filterIn: onSet,
 			protected: false
-		});
+		}*/);
+
+		this.addSetterFilter(onSet);
 
 		this.tiable= true;
 
@@ -978,10 +1277,10 @@ make.tiable= function(objOrClass){
 	}
 
 	if(!objOrClass || (typeof objOrClass != 'object' && typeof objOrClass != 'function')){
-		throw new Error('Invalid type of object of class passed to tiable!');
+		throw new Error('Invalid type of object or class passed to tiable!');
 	}
 
-	if(objOrClass.prototype){
+	if(typeof objOrClass == 'function' && objOrClass.prototype){
 		// is a class
 		Tiable.apply(objOrClass.prototype);
 		return objOrClass;

@@ -72,12 +72,15 @@ make.tiable= function(objOrClass){
 			return val;
 		}
 
-		make.setAndGetable(this, {
+//		debugger;
+		make.observable(this/*, {
 			//specificOnly: true,
 			getter: false,
 			filterIn: onSet,
 			protected: false
-		});
+		}*/);
+
+		this.addSetterFilter(onSet);
 
 		this.tiable= true;
 
@@ -94,10 +97,10 @@ make.tiable= function(objOrClass){
 	}
 
 	if(!objOrClass || (typeof objOrClass != 'object' && typeof objOrClass != 'function')){
-		throw new Error('Invalid type of object of class passed to tiable!');
+		throw new Error('Invalid type of object or class passed to tiable!');
 	}
 
-	if(objOrClass.prototype){
+	if(typeof objOrClass == 'function' && objOrClass.prototype){
 		// is a class
 		Tiable.apply(objOrClass.prototype);
 		return objOrClass;
