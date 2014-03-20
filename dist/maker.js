@@ -1,7 +1,6 @@
 
 make= {};
 
-<<<<<<< HEAD
 make.cleanUpProperties= function(obj, doNotRemoveMethods){
 
     var i = null,
@@ -21,42 +20,6 @@ make.cleanUpProperties= function(obj, doNotRemoveMethods){
 
     return newObj;
 }
-=======
-(function(scope){
-
-    function definePropertyWorks() {
-        try {
-            return 'x' in Object.defineProperty({}, 'x', {});
-        } catch (e) {
-            return false
-        }
-    }
-
-    if(!definePropertyWorks()){
-        // the blood ie8!!!
-        if(window.console){
-            console.warn('The browser does not support defineProperty correctly (it is an IE8, the ONLY browser that has this problem)\n'+
-                         'WARNING: Setters and getters will work as usual, but FILTERS will NOT be applied unless you use the getProp and setProp methods!\n'+
-                         'This means that "obj.data= 123;" will NOT trigger setter filters, although "obj.setData(123);" will.  ');
-        }
-        
-        Object.defineProperty= function(obj, prop, desc) {
-            //obj[prop] = descriptor.value;
-            obj[prop] = desc.value;
-            try{
-                if(obj.__defineGetter__){
-                    if ("get" in desc) obj.__defineGetter__(prop, desc.get);
-                    if ("set" in desc) obj.__defineSetter__(prop, desc.set);
-                }
-            }catch(e){
-                
-            }
-        };
-    }
-
-})(this);
-
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
 make.debounce= function(target, options){
 
 	if(typeof target != 'object' && typeof target != 'function'){
@@ -230,11 +193,7 @@ make.indexable= function(obj){
             };
 
             for(i in cur){
-<<<<<<< HEAD
                 if(!cur.nodeType && cur.hasOwnProperty(i) && typeof cur[i] != 'function'){
-=======
-                if(cur.hasOwnProperty(i) && typeof cur[i] != 'function'){
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
                     if( compare(cur, i, search) ){
                         path.push(castEl(cur, i));
                         valueFound= cur[i];
@@ -358,12 +317,8 @@ make.indexable= function(obj){
             return this.query(prop, valueLike, start, true);
         }
 
-<<<<<<< HEAD
         //this.indexable= true;
         this.__makeData.indexable= true;
-=======
-        this.indexable= true;
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
 
     }
 
@@ -533,11 +488,8 @@ make.indexable= function(obj){
             this.queryAll= function(prop, valueLike){
                 return modelsList[collectionId].queryAll(prop, valueLike);
             };
-<<<<<<< HEAD
 
             this.__makeData.tiable= true;
-=======
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
         }
 
         return new Collection(model);
@@ -572,11 +524,7 @@ make.indexable= function(obj){
             originalSet= null,
             indexOf= function(trigger, obj){
                 var i = 0;
-<<<<<<< HEAD
                 trigger= self.__makeData.observing[trigger] || [];
-=======
-                trigger= self.__makeObserving[trigger] || [];
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
 
                 while(i < trigger.length){
                     if(trigger[i] === obj){
@@ -588,14 +536,10 @@ make.indexable= function(obj){
             };
 
         // preparing the list with its default object
-<<<<<<< HEAD
         if(!self.__makeData){
             self.__makeData= {};
         }
         self.__makeData.observing= {"*": []};
-=======
-        self.__makeObserving= {"*": []};
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
 
         /**
          * Starts listening to events
@@ -623,21 +567,12 @@ make.indexable= function(obj){
                 throw new Error('observer:Invalid listener!\nWhen adding listeners to observables, it is supposed to receive a function as callback.');
             }
             if(typeof trigger == 'string'){
-<<<<<<< HEAD
                 if(!self.__makeData.observing[trigger]){
                     self.__makeData.observing[trigger]= [];
                 }
                 self.__makeData.observing[trigger].push(fn);
             }else{
                 self.__makeData.observing['*'].push(fn);
-=======
-                if(!self.__makeObserving[trigger]){
-                    self.__makeObserving[trigger]= [];
-                }
-                self.__makeObserving[trigger].push(fn);
-            }else{
-                self.__makeObserving['*'].push(fn);
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
             }
             return this;
         };
@@ -736,11 +671,7 @@ make.indexable= function(obj){
                 fn= trigger;
                 trigger= '*';
             }
-<<<<<<< HEAD
             self.__makeData.observing[trigger].splice(indexOf(trigger, fn), 1);
-=======
-            self.__makeObserving[trigger].splice(indexOf(trigger, fn), 1);
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
             return this;
         };
 
@@ -767,7 +698,6 @@ make.indexable= function(obj){
             return this;
         };*/
 
-<<<<<<< HEAD
         if(!observerOpts.onlyByTrigger){
             if(!this.settable){
                 make.setAndGettable(this);
@@ -781,19 +711,6 @@ make.indexable= function(obj){
                 return val;
             });
         }
-=======
-        if(!this.settable){
-            make.setAndGettable(this);
-        }
-
-        this.addSetterFilter(function(prop, val){
-            if(observerOpts && observerOpts.recursive && typeof val == 'object' && !val.length){
-                make.observable(val, observerOpts);
-            }
-            self.trigger(prop, val);
-            return val;
-        });
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
 
         //if(observerOpts.canTrigger){
         /**
@@ -813,11 +730,7 @@ make.indexable= function(obj){
                 trigger= '*';
             }
 
-<<<<<<< HEAD
             list= (self.__makeData.observing[trigger])? self.__makeData.observing[trigger]: [];
-=======
-            list= (self.__makeObserving[trigger])? self.__makeObserving[trigger]: [];
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
             l= list.length;
 
             for(; i<l; i++){
@@ -846,13 +759,8 @@ make.indexable= function(obj){
         };
         //}
 
-<<<<<<< HEAD
         if(!this.__makeData.observable){
             this.__makeData.observable= true;
-=======
-        if(!this.__makeObservable){
-            this.__makeObservable= true;
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
         }
 
         return this;
@@ -872,11 +780,7 @@ make.indexable= function(obj){
             observerOpts.recursive !== false &&
             target != make){
             for(i in target){
-<<<<<<< HEAD
                 if(target[i] && !(target[i].__makeData && target[i].__makeData.observable) && typeof target[i] == 'object' && !target[i].length){
-=======
-                if(target[i] && !target[i].__makeObservable && typeof target[i] == 'object' && !target[i].length){
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
                     // is an object, but not null neither array
                     make.observable(target[i], observerOpts);
                 }
@@ -992,6 +896,27 @@ make.indexable= function(obj){
         return target;
     };
 })();
+(function(){
+
+	function Promise(fn){
+
+		this.fn= fn;
+
+		return this;
+	}
+
+	make.promise= function(){
+		var args= Array.prototype.slice.call(arguments);
+		args= args.map(function(cur){
+			return new Promise(cur);
+		});
+		return args.length > 1? args: args[0];
+	}
+})();
+
+
+
+
 make.readonly= function(target, options){
 
     var prop= null
@@ -1017,8 +942,6 @@ make.readonly= function(target, options){
 
     return target;
 };
-// TODO: there is a problem with making prototypes settable and its references.
-
 (function(){
 
 	make.setAndGettable= function(target, options){
@@ -1037,11 +960,8 @@ make.readonly= function(target, options){
 		options.filterOut= options.filterOut || false;
 		options.protected= options.protected || true;
 		options.allowNewSetters= options.allowNewSetters || true;
-<<<<<<< HEAD
 
 		var oTarget= target;
-=======
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
 
 		var setFilters= { '*': [] };
 		var getFilters= { '*': [] };
@@ -1102,7 +1022,6 @@ make.readonly= function(target, options){
 			return ret;
 		}
 
-<<<<<<< HEAD
 		function verifySetAndGetValue(that){
 			if(!that.__makeData.setGetValue){
 
@@ -1131,19 +1050,6 @@ make.readonly= function(target, options){
 				target['set'+name]= function(val){
 
 					verifySetAndGetValue(this);
-=======
-		function createSetterAndGetter(target, i, isPrototypeOf){
-			
-			var value= target[i];
-			var name= i[0].toUpperCase() + i.substring(1);
-
-			if(!target['set'+name]){
-				target['set'+name]= function(val){
-
-					if(!this.__makeSetGetValue){
-						this.__makeSetGetValue= {};
-					}
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
 
 					var tmp= null;
 					
@@ -1156,7 +1062,6 @@ make.readonly= function(target, options){
 
 					if(tmp !== void 0){
 						if(options.isPrototypeOf){
-<<<<<<< HEAD
 							this.__makeData.setGetValue[i]= tmp;
 						}else{
 							value= tmp;
@@ -1187,39 +1092,6 @@ make.readonly= function(target, options){
 				};
 			}
 
-=======
-							this.__makeSetGetValue[i]= tmp;
-						}else{
-							value= tmp;
-						}
-					}
-					
-					return this;
-				};
-			}
-
-			if(!target['get'+name] && name.substring(0, 6) != '__make'){
-				target['get'+name]= function(){
-					var v= null;
-					if(options.isPrototypeOf){
-						if(!this.__makeSetGetValue){
-							this.__makeSetGetValue= {};
-						}
-						v= this.__makeSetGetValue[i];
-					}else{
-						v= value;
-					}
-					v= applyFiltersOut(i, v);
-
-					if(v === void 0 && value !== void 0){
-						return value;
-					}
-
-					return v;
-				};
-			}
-
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
 			if(name.substring(0, 6) != '__make'){
 				if(options.protected){
 					try{
@@ -1241,7 +1113,6 @@ make.readonly= function(target, options){
 						// could not define a property...
 						// we shall ignore it, because it is probably happening
 						// because it was already defined.
-<<<<<<< HEAD
 					}
 				}
 				
@@ -1251,11 +1122,6 @@ make.readonly= function(target, options){
 					}
 					target.__makeData.setGetValue[i]= oTarget[i];
 				}
-=======
-					}
-				}
-
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
 			}
 		}
 
@@ -1339,11 +1205,7 @@ make.readonly= function(target, options){
 			}
 		}
 
-<<<<<<< HEAD
 		target.__makeData.setAndGettable= true;
-=======
-		target.__makeSetAndGettable= true;
->>>>>>> 85ab52998aba474dc464690e27aba3b0f1947cce
 
 		return target;
 
