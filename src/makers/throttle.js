@@ -37,12 +37,13 @@ make.throttle= function(target, options){
 
     function makeThrottle(fn) {
         return function() {
+            var t= this == window? target: this;
             if ((lastExecution.getTime() + dist) <= (new Date()).getTime()) {
                 lastExecution = new Date();
-                return fn.apply(target, arguments);
+                return fn.apply(t, arguments);
             }
         };
     };
 
-    return target;
+    return makeThrottle(target, options);
 };

@@ -24,7 +24,6 @@
                 console.lot('running '+distance+' kms');
             },
             oncreate: function(name, age){
-                
                 if(name){
                     this.setName(name);
                 }
@@ -41,7 +40,7 @@
         var p1= person.create();
         p1.setName('Felipe').setAge(28);
         var p2= person.create('Jason', 98);
-        var p3= person.create('Franson', 32);            
+        var p3= person.create('Franson', 32);
 
         console.log(p1, p2, p3);
 
@@ -90,7 +89,6 @@
         console.log(2, c1.getFactory());
         console.log(3, c2.factory);
         console.log(4, c3.get('factory'));
-
         </script>
 
         <script>
@@ -100,5 +98,113 @@
         </script>
 
 
+        <script>
+            /*var lettableWin= null;
+            (function(){
+                // to setup the crazy lettable hack we need to
+                // introduce vb script eval
+                // the only way that seems to work for adding a VBScript to the page is with a document.write
+                // document.write is not always available, so we use an iframe to do the document.write
+                // the iframe also provides a good hiding place for all the global variables that we must
+                // create in order for JScript and VBScript to interact.
+                var frame;
+                if(document.body){ // if the DOM is ready we can add it
+                    frame = document.createElement("iframe");
+                    document.body.appendChild(frame);
+                }else{ // other we have to write it out
+                    document.write("<iframe id='dj_vb_eval_frame'></iframe>");
+                    frame = document.getElementById("dj_vb_eval_frame");
+                }
+                frame.style.display="none";
+                var doc = frame.contentWindow.document;
+                lettableWin = frame.contentWindow;
+                doc.write('<html><head><script language="VBScript" type="text/VBScript">' +
+                    'Function vb_global_eval(code)' +
+                        'ExecuteGlobal(code)' +
+                    'End Function' +
+                    '<' +'/script>' +
+                    '<script type="text/javascript">' +
+                    'function vbEval(code){ \n' + // this has to be here to call it from another frame
+                        'return vb_global_eval(code);' +
+                    '}' +
+                    'function construct(name){ \n' + // and this too
+                        'return window[name]();' +
+                    '}' +
+                    '<'+'/script>' +
+                    '</head><body>vb-eval</body></html>');
+                doc.close();
+            })();*/
+
+            /**
+            * Creates a "subclass" of HTMLImageElement.
+            */
+            /*
+            function newImageElement(){
+
+              // Create a regular img element.
+              var img = document.createElement("bla");
+
+              // A variable to hold the Image instance.
+              var _image = null;
+
+              // Create a property. The get and set closures will keep
+              // the _image variable in scope. The setter sets the properties
+              // on the img element.
+              Object.defineProperty(img, "image", {
+                get : function(){
+                    console.log('GETTOU ');
+                    return _image;
+                },
+                set : function(value){
+                    console.log('SETTOU');
+                    _image = value;
+                }
+              });
+
+              // Return the modified img element.
+              return img;
+            }
+
+            function createX(){
+
+                var _val= null;
+                var x= {};
+
+                x= Object.defineProperty(x, 'foo', {
+                    get : function(){
+                        console.log('GETTOU ');
+                      return _val;
+                    },
+                    set : function(value){
+                        console.log('SETTOU');
+                        _val = value;
+                    }
+                });
+                return x;
+            }
+
+            var x= createX();
+
+
+            var i = newImageElement();
+            */
+            //i.image; // should log "GETTOU"
+
+            /*
+                var DOMEl= document.createElement('div');
+                document.body.appendChild(DOMEl);
+
+                //Object.prototype.__defineSetter__();
+                var x= { foo: 'bar' };
+
+                x.__makeSetGetDOMWorkAroundForIE8= DOMEl;
+                Object.defineProperty(x.__makeSetGetDOMWorkAroundForIE8, 'foo', {
+                    set: function(val){
+                        console.log('FOI SETADO PARA ', val);
+                    }
+                });
+            */
+
+        </script>
     </body>
 </html>

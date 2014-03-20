@@ -1,5 +1,3 @@
-// TODO: there is a problem with making prototypes settable and its references.
-
 (function(){
 
 	make.setAndGettable= function(target, options){
@@ -18,6 +16,8 @@
 		options.filterOut= options.filterOut || false;
 		options.protected= options.protected || true;
 		options.allowNewSetters= options.allowNewSetters || true;
+
+		var oTarget= target;
 
 		var setFilters= { '*': [] };
 		var getFilters= { '*': [] };
@@ -78,17 +78,34 @@
 			return ret;
 		}
 
+		function verifySetAndGetValue(that){
+			if(!that.__makeData.setGetValue){
+
+				if(make.__isIE8){
+					// need to be treated differently
+					//var DOMElRef= document.createElement('makeDOMElement');
+					//that.__makeSetGetDOMWorkAroundForIE8= DOMElRef;
+
+				}else{}
+
+				that.__makeData.setGetValue= {};
+			}
+		}
+
 		function createSetterAndGetter(target, i, isPrototypeOf){
 			
 			var value= target[i];
 			var name= i[0].toUpperCase() + i.substring(1);
 
+			if(!target.__makeData){
+				target.__makeData= {};
+				target.__makeData.setGetValue= {};
+			}
+
 			if(!target['set'+name]){
 				target['set'+name]= function(val){
 
-					if(!this.__makeSetGetValue){
-						this.__makeSetGetValue= {};
-					}
+					verifySetAndGetValue(this);
 
 					var tmp= null;
 					
@@ -101,7 +118,7 @@
 
 					if(tmp !== void 0){
 						if(options.isPrototypeOf){
-							this.__makeSetGetValue[i]= tmp;
+							this.__makeData.setGetValue[i]= tmp;
 						}else{
 							value= tmp;
 						}
@@ -115,10 +132,9 @@
 				target['get'+name]= function(){
 					var v= null;
 					if(options.isPrototypeOf){
-						if(!this.__makeSetGetValue){
-							this.__makeSetGetValue= {};
-						}
-						v= this.__makeSetGetValue[i];
+						verifySetAndGetValue(this);
+						
+						v= this.__makeData.setGetValue[i];
 					}else{
 						v= value;
 					}
@@ -155,7 +171,13 @@
 						// because it was already defined.
 					}
 				}
-
+				
+				if(typeof i == 'string' || !isNaN(i)){
+					if(!target.__makeData.setGetValue){
+						target.__makeData.setGetValue= {};
+					}
+					target.__makeData.setGetValue[i]= oTarget[i];
+				}
 			}
 		}
 
@@ -239,7 +261,7 @@
 			}
 		}
 
-		target.__makeSetAndGettable= true;
+		target.__makeData.setAndGettable= true;
 
 		return target;
 

@@ -42,7 +42,7 @@ make.worker= function(target, options){
 		}
 
 	    function createWorker(fn){
-			var blob = new Blob([fn]);
+			var blob = new Blob([fn], {type: 'application/javascript'});
 
 			var worker = new Worker(window.URL.createObjectURL(blob));
 		    worker.onmessage = function(e) {

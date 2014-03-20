@@ -23,7 +23,8 @@ make.debounce= function(target, options){
 		i= 0,
 		l= list.length,
 		dist = options.distance,
-		timeout= null;
+		timeLimit= options.timeout || false,
+		tos= [];
 
 	if(typeof target == 'object'){
 		for(; i<l; i++){
@@ -39,11 +40,23 @@ make.debounce= function(target, options){
 	function makeDebounce(fn) {
 		return function() {
 			var args= arguments;
+			var t= this == window? target: this;
 
-			window.clearTimeout(timeout);
-			timeout= setTimeout(function(){
-				fn.apply(target, args);
+			window.clearTimeout(tos[0]);
+
+			tos[0]= setTimeout(function(){
+				fn.apply(t, args);
+				window.clearTimeout(tos[1]);
+				tos[1]= false;
 			}, options.distance);
+
+			if(timeLimit && !tos[1]){
+				tos[1]= setTimeout(function(){
+					fn.apply(t, args);
+					window.clearTimeout(tos[1]);
+					tos[1]= false;
+				}, options.timeout);
+			}
 		};
 	};
 

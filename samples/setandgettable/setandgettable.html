@@ -22,7 +22,7 @@
                 desc: 'a nice guy'
             };
 
-            make.setAndGetable(o);
+            make.setAndGettable(o);
             // or it could be make.setAndGetable(o);
 
             /*
@@ -39,7 +39,7 @@
                 this.age= -1;
                 this.desc= '';
 
-                make.setAndGetable(this, {
+                make.setAndGettable(this, {
                     filterIn: function(prop, value){
                         switch(prop){
                             case 'age':

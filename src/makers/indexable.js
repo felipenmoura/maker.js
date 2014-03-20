@@ -105,7 +105,7 @@ make.indexable= function(obj){
                 }else{
                     val= target[key];
                 }
-                val= val.valueOf() || '';
+                val= val.valueOf? val.valueOf() : '';
 
                 try{
                     if( (val.match && val.match(search)) || val == oSearch ){
@@ -118,7 +118,7 @@ make.indexable= function(obj){
             };
 
             for(i in cur){
-                if(cur.hasOwnProperty(i) && typeof cur[i] != 'function'){
+                if(!cur.nodeType && cur.hasOwnProperty(i) && typeof cur[i] != 'function'){
                     if( compare(cur, i, search) ){
                         path.push(castEl(cur, i));
                         valueFound= cur[i];
@@ -242,7 +242,8 @@ make.indexable= function(obj){
             return this.query(prop, valueLike, start, true);
         }
 
-        this.indexable= true;
+        //this.indexable= true;
+        this.__makeData.indexable= true;
 
     }
 

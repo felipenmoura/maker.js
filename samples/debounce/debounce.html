@@ -14,7 +14,7 @@
     		The output is in your console.
     	</div>
 
-        <script src='../dist/maker.js'></script>
+        <script src='../../dist/maker.js'></script>
 
         <script id='sampleCode'>
             /*
@@ -27,9 +27,16 @@
             document.body.onmousemove= o.mm;
             */
             // OR
-            document.body.onmousemove= make.debounce(function(e){
+            document.body.addEventListener('mousemove', make.debounce(function(e){
                 console.log('Mouse stoped moving at ', e.clientX + '/' + e.clientY);
-            });
+            }));
+
+            document.body.addEventListener('mousemove', make.debounce(function(e){
+                console.log('Stoped moving the mouse one second ago...or, did not stop moving the mouse for more than 3 seconds');
+            }, {
+                distance: 1000,
+                timeout: 3000
+            }));
 
         </script>
 

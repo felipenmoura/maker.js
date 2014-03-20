@@ -1,40 +1,25 @@
 
 make= {};
 
-(function(scope){
+make.cleanUpProperties= function(obj, doNotRemoveMethods){
 
-    function definePropertyWorks() {
-        try {
-            return 'x' in Object.defineProperty({}, 'x', {});
-        } catch (e) {
-            return false
-        }
-    }
+    var i = null,
+        newObj= {};
 
-    if(!definePropertyWorks()){
-        // the blood ie8!!!
-        if(window.console){
-            console.warn('The browser does not support defineProperty correctly (it is an IE8, the ONLY browser that has this problem)\n'+
-                         'WARNING: Setters and getters will work as usual, but FILTERS will NOT be applied unless you use the getProp and setProp methods!\n'+
-                         'This means that "obj.data= 123;" will NOT trigger setter filters, although "obj.setData(123);" will.  ');
-        }
-        
-        Object.defineProperty= function(obj, prop, desc) {
-            //obj[prop] = descriptor.value;
-            obj[prop] = desc.value;
-            try{
-                if(obj.__defineGetter__){
-                    if ("get" in desc) obj.__defineGetter__(prop, desc.get);
-                    if ("set" in desc) obj.__defineSetter__(prop, desc.set);
+    for(i in obj){
+        if(i.substring(0,6) != '__make'){
+            if(doNotRemoveMethods || typeof obj[i] != 'function'){
+                if(typeof obj[i] == 'object'){
+                    newObj[i]= make.cleanUpProperties(obj[i], doNotRemoveMethods);
+                }else{
+                    newObj[i]= obj[i];
                 }
-            }catch(e){
-                
             }
-        };
+        }
     }
 
-})(this);
-
+    return newObj;
+}
 make.debounce= function(target, options){
 
 	if(typeof target != 'object' && typeof target != 'function'){
@@ -60,7 +45,8 @@ make.debounce= function(target, options){
 		i= 0,
 		l= list.length,
 		dist = options.distance,
-		timeout= null;
+		timeLimit= options.timeout || false,
+		tos= [];
 
 	if(typeof target == 'object'){
 		for(; i<l; i++){
@@ -76,16 +62,29 @@ make.debounce= function(target, options){
 	function makeDebounce(fn) {
 		return function() {
 			var args= arguments;
+			var t= this == window? target: this;
 
-			window.clearTimeout(timeout);
-			timeout= setTimeout(function(){
-				fn.apply(target, args);
+			window.clearTimeout(tos[0]);
+
+			tos[0]= setTimeout(function(){
+				fn.apply(t, args);
+				window.clearTimeout(tos[1]);
+				tos[1]= false;
 			}, options.distance);
+
+			if(timeLimit && !tos[1]){
+				tos[1]= setTimeout(function(){
+					fn.apply(t, args);
+					window.clearTimeout(tos[1]);
+					tos[1]= false;
+				}, options.timeout);
+			}
 		};
 	};
 
 	return target;
 };
+
 
 /**
  * This method offers the feature of making objects indexable.
@@ -194,7 +193,7 @@ make.indexable= function(obj){
                 }else{
                     val= target[key];
                 }
-                val= val.valueOf() || '';
+                val= val.valueOf? val.valueOf() : '';
 
                 try{
                     if( (val.match && val.match(search)) || val == oSearch ){
@@ -207,7 +206,7 @@ make.indexable= function(obj){
             };
 
             for(i in cur){
-                if(cur.hasOwnProperty(i) && typeof cur[i] != 'function'){
+                if(!cur.nodeType && cur.hasOwnProperty(i) && typeof cur[i] != 'function'){
                     if( compare(cur, i, search) ){
                         path.push(castEl(cur, i));
                         valueFound= cur[i];
@@ -331,7 +330,8 @@ make.indexable= function(obj){
             return this.query(prop, valueLike, start, true);
         }
 
-        this.indexable= true;
+        //this.indexable= true;
+        this.__makeData.indexable= true;
 
     }
 
@@ -501,6 +501,8 @@ make.indexable= function(obj){
             this.queryAll= function(prop, valueLike){
                 return modelsList[collectionId].queryAll(prop, valueLike);
             };
+
+            this.__makeData.tiable= true;
         }
 
         return new Collection(model);
@@ -535,7 +537,7 @@ make.indexable= function(obj){
             originalSet= null,
             indexOf= function(trigger, obj){
                 var i = 0;
-                trigger= self.__makeObserving[trigger] || [];
+                trigger= self.__makeData.observing[trigger] || [];
 
                 while(i < trigger.length){
                     if(trigger[i] === obj){
@@ -547,7 +549,10 @@ make.indexable= function(obj){
             };
 
         // preparing the list with its default object
-        self.__makeObserving= {"*": []};
+        if(!self.__makeData){
+            self.__makeData= {};
+        }
+        self.__makeData.observing= {"*": []};
 
         /**
          * Starts listening to events
@@ -575,12 +580,12 @@ make.indexable= function(obj){
                 throw new Error('observer:Invalid listener!\nWhen adding listeners to observables, it is supposed to receive a function as callback.');
             }
             if(typeof trigger == 'string'){
-                if(!self.__makeObserving[trigger]){
-                    self.__makeObserving[trigger]= [];
+                if(!self.__makeData.observing[trigger]){
+                    self.__makeData.observing[trigger]= [];
                 }
-                self.__makeObserving[trigger].push(fn);
+                self.__makeData.observing[trigger].push(fn);
             }else{
-                self.__makeObserving['*'].push(fn);
+                self.__makeData.observing['*'].push(fn);
             }
             return this;
         };
@@ -679,7 +684,7 @@ make.indexable= function(obj){
                 fn= trigger;
                 trigger= '*';
             }
-            self.__makeObserving[trigger].splice(indexOf(trigger, fn), 1);
+            self.__makeData.observing[trigger].splice(indexOf(trigger, fn), 1);
             return this;
         };
 
@@ -706,17 +711,19 @@ make.indexable= function(obj){
             return this;
         };*/
 
-        if(!this.settable){
-            make.setAndGettable(this);
-        }
-
-        this.addSetterFilter(function(prop, val){
-            if(observerOpts && observerOpts.recursive && typeof val == 'object' && !val.length){
-                make.observable(val, observerOpts);
+        if(!observerOpts.onlyByTrigger){
+            if(!this.settable){
+                make.setAndGettable(this);
             }
-            self.trigger(prop, val);
-            return val;
-        });
+
+            this.addSetterFilter(function(prop, val){
+                if(observerOpts && observerOpts.recursive && typeof val == 'object' && !val.length){
+                    make.observable(val, observerOpts);
+                }
+                self.trigger(prop, val);
+                return val;
+            });
+        }
 
         //if(observerOpts.canTrigger){
         /**
@@ -736,7 +743,7 @@ make.indexable= function(obj){
                 trigger= '*';
             }
 
-            list= (self.__makeObserving[trigger])? self.__makeObserving[trigger]: [];
+            list= (self.__makeData.observing[trigger])? self.__makeData.observing[trigger]: [];
             l= list.length;
 
             for(; i<l; i++){
@@ -746,9 +753,11 @@ make.indexable= function(obj){
                         this.off(trigger, list[i]);
                     }
                 }catch(e){
+                    var where= (observed.name || (observed.prototype? observed.prototype.name: ''));
                     console.error('observer:Failed to execute a function from a listener.\n' +
-                                  'Listening to changes on '+trigger+'\n' +
-                                  'At '+ observed);
+                                  'Listening to changes on "'+trigger+'"\n' +
+                                  (where? 'At '+ where: '')+ '\n'+
+                                  'with the message: ' + e.message, e);
                 }
             }
 
@@ -763,13 +772,13 @@ make.indexable= function(obj){
         };
         //}
 
-        if(!this.__makeObservable){
-            this.__makeObservable= true;
+        if(!this.__makeData.observable){
+            this.__makeData.observable= true;
         }
 
         return this;
     };
-    
+
     make.observable= function(target, observerOpts){
 
         var i= null;
@@ -784,7 +793,7 @@ make.indexable= function(obj){
             observerOpts.recursive !== false &&
             target != make){
             for(i in target){
-                if(target[i] && !target[i].__makeObservable && typeof target[i] == 'object' && !target[i].length){
+                if(target[i] && !(target[i].__makeData && target[i].__makeData.observable) && typeof target[i] == 'object' && !target[i].length){
                     // is an object, but not null neither array
                     make.observable(target[i], observerOpts);
                 }
@@ -844,6 +853,83 @@ make.indexable= function(obj){
 
 
 })();
+(function(){
+    make.persistent= function makePersistent(target, id, bridge){
+
+        if(typeof id != 'string' && !bridge){
+            bridge= id;
+            id= '__makePersistentGenericObject';
+        }
+
+        var name= target.prototype? target.prototype.name || target.name : id;
+
+        if(!bridge){
+            bridge= window.localStorage;
+        }
+
+        if(!target.__makeSetAndGettable){
+            target= make.setAndGettable(target);
+        }
+
+        target.save= function(){
+            bridge.setItem(name, JSON.stringify(target.__makeData.setGetValue));
+        };
+        target.load= function(cb){
+            // works with both sync and async bridges
+            var ret= bridge.getItem(name, function(ret){
+                if(typeof ret == 'string'){
+                    try{ret= JSON.parse(ret);}catch(e){};
+                }
+                target.set(ret);
+                if(cb && typeof cb == 'function'){
+                    try{cb(ret);}catch(e){}
+                }
+            });
+            if(ret){
+                if(typeof ret == 'string'){
+                    try{ret= JSON.parse(ret);}catch(e){};
+                }
+                target.set(ret);
+                if(cb && typeof cb == 'function'){
+                    try{cb(ret);}catch(e){}
+                }
+            }
+            return target;
+        }
+
+        target.addSetterFilter(make.debounce(function(){
+            target.save();
+        }, {distance: 200}));
+
+        target.load();
+
+        target.__makeData.Persistent= true;
+        //target.save();
+
+        return target;
+    };
+})();
+(function(){
+
+	function Promise(fn){
+
+		this.fn= fn;
+
+		return this;
+	}
+
+	make.promise= function(){
+		var args= Array.prototype.slice.call(arguments);
+		args= args.map(function(cur){
+			return new Promise(cur);
+		});
+		return args.length > 1? args: args[0];
+	}
+})();
+
+
+
+
 make.readonly= function(target, options){
 
     var prop= null
@@ -869,8 +955,6 @@ make.readonly= function(target, options){
 
     return target;
 };
-// TODO: there is a problem with making prototypes settable and its references.
-
 (function(){
 
 	make.setAndGettable= function(target, options){
@@ -889,6 +973,8 @@ make.readonly= function(target, options){
 		options.filterOut= options.filterOut || false;
 		options.protected= options.protected || true;
 		options.allowNewSetters= options.allowNewSetters || true;
+
+		var oTarget= target;
 
 		var setFilters= { '*': [] };
 		var getFilters= { '*': [] };
@@ -949,17 +1035,34 @@ make.readonly= function(target, options){
 			return ret;
 		}
 
+		function verifySetAndGetValue(that){
+			if(!that.__makeData.setGetValue){
+
+				if(make.__isIE8){
+					// need to be treated differently
+					//var DOMElRef= document.createElement('makeDOMElement');
+					//that.__makeSetGetDOMWorkAroundForIE8= DOMElRef;
+
+				}else{}
+
+				that.__makeData.setGetValue= {};
+			}
+		}
+
 		function createSetterAndGetter(target, i, isPrototypeOf){
 			
 			var value= target[i];
 			var name= i[0].toUpperCase() + i.substring(1);
 
+			if(!target.__makeData){
+				target.__makeData= {};
+				target.__makeData.setGetValue= {};
+			}
+
 			if(!target['set'+name]){
 				target['set'+name]= function(val){
 
-					if(!this.__makeSetGetValue){
-						this.__makeSetGetValue= {};
-					}
+					verifySetAndGetValue(this);
 
 					var tmp= null;
 					
@@ -972,7 +1075,7 @@ make.readonly= function(target, options){
 
 					if(tmp !== void 0){
 						if(options.isPrototypeOf){
-							this.__makeSetGetValue[i]= tmp;
+							this.__makeData.setGetValue[i]= tmp;
 						}else{
 							value= tmp;
 						}
@@ -986,10 +1089,9 @@ make.readonly= function(target, options){
 				target['get'+name]= function(){
 					var v= null;
 					if(options.isPrototypeOf){
-						if(!this.__makeSetGetValue){
-							this.__makeSetGetValue= {};
-						}
-						v= this.__makeSetGetValue[i];
+						verifySetAndGetValue(this);
+						
+						v= this.__makeData.setGetValue[i];
 					}else{
 						v= value;
 					}
@@ -1026,7 +1128,13 @@ make.readonly= function(target, options){
 						// because it was already defined.
 					}
 				}
-
+				
+				if(typeof i == 'string' || !isNaN(i)){
+					if(!target.__makeData.setGetValue){
+						target.__makeData.setGetValue= {};
+					}
+					target.__makeData.setGetValue[i]= oTarget[i];
+				}
 			}
 		}
 
@@ -1110,7 +1218,7 @@ make.readonly= function(target, options){
 			}
 		}
 
-		target.__makeSetAndGettable= true;
+		target.__makeData.setAndGettable= true;
 
 		return target;
 
@@ -1171,14 +1279,15 @@ make.throttle= function(target, options){
 
     function makeThrottle(fn) {
         return function() {
+            var t= this == window? target: this;
             if ((lastExecution.getTime() + dist) <= (new Date()).getTime()) {
                 lastExecution = new Date();
-                return fn.apply(target, arguments);
+                return fn.apply(t, arguments);
             }
         };
     };
 
-    return target;
+    return makeThrottle(target, options);
 };
 make.tiable= function(objOrClass){
 
@@ -1338,7 +1447,7 @@ make.worker= function(target, options){
 		}
 
 	    function createWorker(fn){
-			var blob = new Blob([fn]);
+			var blob = new Blob([fn], {type: 'application/javascript'});
 
 			var worker = new Worker(window.URL.createObjectURL(blob));
 		    worker.onmessage = function(e) {
