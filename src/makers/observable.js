@@ -25,7 +25,7 @@
             originalSet= null,
             indexOf= function(trigger, obj){
                 var i = 0;
-                trigger= self.__makeObserving[trigger] || [];
+                trigger= self.__makeData.observing[trigger] || [];
 
                 while(i < trigger.length){
                     if(trigger[i] === obj){
@@ -37,7 +37,10 @@
             };
 
         // preparing the list with its default object
-        self.__makeObserving= {"*": []};
+        if(!self.__makeData){
+            self.__makeData= {};
+        }
+        self.__makeData.observing= {"*": []};
 
         /**
          * Starts listening to events
@@ -65,12 +68,12 @@
                 throw new Error('observer:Invalid listener!\nWhen adding listeners to observables, it is supposed to receive a function as callback.');
             }
             if(typeof trigger == 'string'){
-                if(!self.__makeObserving[trigger]){
-                    self.__makeObserving[trigger]= [];
+                if(!self.__makeData.observing[trigger]){
+                    self.__makeData.observing[trigger]= [];
                 }
-                self.__makeObserving[trigger].push(fn);
+                self.__makeData.observing[trigger].push(fn);
             }else{
-                self.__makeObserving['*'].push(fn);
+                self.__makeData.observing['*'].push(fn);
             }
             return this;
         };
@@ -169,7 +172,7 @@
                 fn= trigger;
                 trigger= '*';
             }
-            self.__makeObserving[trigger].splice(indexOf(trigger, fn), 1);
+            self.__makeData.observing[trigger].splice(indexOf(trigger, fn), 1);
             return this;
         };
 
@@ -228,7 +231,7 @@
                 trigger= '*';
             }
 
-            list= (self.__makeObserving[trigger])? self.__makeObserving[trigger]: [];
+            list= (self.__makeData.observing[trigger])? self.__makeData.observing[trigger]: [];
             l= list.length;
 
             for(; i<l; i++){
@@ -238,9 +241,11 @@
                         this.off(trigger, list[i]);
                     }
                 }catch(e){
+                    var where= (observed.name || (observed.prototype? observed.prototype.name: ''));
                     console.error('observer:Failed to execute a function from a listener.\n' +
-                                  'Listening to changes on '+trigger+'\n' +
-                                  'At '+ observed);
+                                  'Listening to changes on "'+trigger+'"\n' +
+                                  (where? 'At '+ where: '')+ '\n'+
+                                  'with the message: ' + e.message, e);
                 }
             }
 
@@ -255,8 +260,8 @@
         };
         //}
 
-        if(!this.__makeObservable){
-            this.__makeObservable= true;
+        if(!this.__makeData.observable){
+            this.__makeData.observable= true;
         }
 
         return this;
@@ -276,7 +281,7 @@
             observerOpts.recursive !== false &&
             target != make){
             for(i in target){
-                if(target[i] && !target[i].__makeObservable && typeof target[i] == 'object' && !target[i].length){
+                if(target[i] && !(target[i].__makeData && target[i].__makeData.observable) && typeof target[i] == 'object' && !target[i].length){
                     // is an object, but not null neither array
                     make.observable(target[i], observerOpts);
                 }

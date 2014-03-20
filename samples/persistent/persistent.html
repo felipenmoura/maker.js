@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+    <head>
+    </head>
+    <body>
+
+        <h3>Look the console of your browser</h3>
+
+        <div>
+            This maker will allow you to easily create setters and getters for all the properties in a given object.<br/>
+            The source code:<br/>
+            <pre id='sc'></pre>
+            The output is in your console.
+        </div>
+
+        <script src='../../dist/maker.js'></script>
+
+        <script id='sampleCode'>
+            var o= {
+                name: 'felipe',
+                age: 28,
+                desc: 'a nice guy'
+            };
+
+            //debugger;
+            make.persistent(o, 'myObject');
+
+            o.set('age', 19);
+            
+            console.log(o);
+
+            
+            var Person= function(id){
+                this.name= '';
+                this.age= -1;
+                this.desc= '';
+                
+                make.persistent(this, id);
+
+                return this;
+            };
+            
+            var p1 = new Person('Person1');
+            var p2 = new Person('Person2');
+            
+            p1.name= 'Felipe';
+            p1.setAge(28).setDesc('a programmer');
+
+            p2.set('name', 'Moura').set('age', 19).set('desc', 'something here');
+
+            console.log(p1);
+            console.log(p2);
+            
+        </script>
+
+        <script>
+            setTimeout(function(){
+                document.getElementById('sc').innerHTML= document.getElementById('sampleCode').text;
+            }, 100);
+        </script>
+
+    </body>
+</html>

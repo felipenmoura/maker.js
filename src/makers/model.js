@@ -154,6 +154,8 @@
             this.queryAll= function(prop, valueLike){
                 return modelsList[collectionId].queryAll(prop, valueLike);
             };
+
+            this.__makeData.tiable= true;
         }
 
         return new Collection(model);

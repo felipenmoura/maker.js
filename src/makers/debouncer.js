@@ -39,10 +39,11 @@ make.debounce= function(target, options){
 	function makeDebounce(fn) {
 		return function() {
 			var args= arguments;
+			var t= this == window? target: this;
 
 			window.clearTimeout(timeout);
 			timeout= setTimeout(function(){
-				fn.apply(target, args);
+				fn.apply(t, args);
 			}, options.distance);
 		};
 	};

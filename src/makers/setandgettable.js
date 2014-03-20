@@ -1,5 +1,3 @@
-// TODO: there is a problem with making prototypes settable and its references.
-
 (function(){
 
 	make.setAndGettable= function(target, options){
@@ -18,6 +16,8 @@
 		options.filterOut= options.filterOut || false;
 		options.protected= options.protected || true;
 		options.allowNewSetters= options.allowNewSetters || true;
+
+		var oTarget= target;
 
 		var setFilters= { '*': [] };
 		var getFilters= { '*': [] };
@@ -79,7 +79,7 @@
 		}
 
 		function verifySetAndGetValue(that){
-			if(!that.__makeSetGetValue){
+			if(!that.__makeData.setGetValue){
 
 				if(make.__isIE8){
 					// need to be treated differently
@@ -88,7 +88,7 @@
 
 				}else{}
 
-				that.__makeSetGetValue= {};
+				that.__makeData.setGetValue= {};
 			}
 		}
 
@@ -96,6 +96,11 @@
 			
 			var value= target[i];
 			var name= i[0].toUpperCase() + i.substring(1);
+
+			if(!target.__makeData){
+				target.__makeData= {};
+				target.__makeData.setGetValue= {};
+			}
 
 			if(!target['set'+name]){
 				target['set'+name]= function(val){
@@ -113,7 +118,7 @@
 
 					if(tmp !== void 0){
 						if(options.isPrototypeOf){
-							this.__makeSetGetValue[i]= tmp;
+							this.__makeData.setGetValue[i]= tmp;
 						}else{
 							value= tmp;
 						}
@@ -129,7 +134,7 @@
 					if(options.isPrototypeOf){
 						verifySetAndGetValue(this);
 						
-						v= this.__makeSetGetValue[i];
+						v= this.__makeData.setGetValue[i];
 					}else{
 						v= value;
 					}
@@ -166,7 +171,13 @@
 						// because it was already defined.
 					}
 				}
-
+				
+				if(typeof i == 'string' || !isNaN(i)){
+					if(!target.__makeData.setGetValue){
+						target.__makeData.setGetValue= {};
+					}
+					target.__makeData.setGetValue[i]= oTarget[i];
+				}
 			}
 		}
 
@@ -250,7 +261,7 @@
 			}
 		}
 
-		target.__makeSetAndGettable= true;
+		target.__makeData.setAndGettable= true;
 
 		return target;
 
