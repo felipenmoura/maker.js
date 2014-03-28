@@ -503,6 +503,7 @@ ul.contact li a.icon-rss:before
 		text-transform: uppercase;
 		outline: 0;
 		color: #FFF;
+		white-space: nowrap;
 	}
 
 	#menu li:hover{
@@ -1118,7 +1119,7 @@ ul.contact li a.icon-rss:before
 }
 
 .ebox4{
-	background-color: #7C87DA; /* #1F2EA2; */
+	background-color: #fa5546; /* #7C87DA; */ /* #1F2EA2; */
 	color: white;
 	margin-top: -4em;
 	padding-bottom: 4em;
@@ -1163,10 +1164,11 @@ ul.contact li a.icon-rss:before
 	font-family: 'Source Sans Pro', sans-serif;
 	color: black;
 
-	width: 7.5em;
+	width: 8em;
 	margin: auto;
 	position: relative;
 	top: -2em;
+	font-weight: bold;
 }
 .ebox4  a{
 	color: white;
@@ -1292,7 +1294,7 @@ pre .param{
 /* responsiving */
 @media screen and (min-width: 780px) {
 	.teaser td{
-		width: 48%;
+		width: 47%;
 		margin: 1%;
 	}
 }
