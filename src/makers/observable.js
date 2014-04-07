@@ -204,11 +204,11 @@
                 make.setAndGettable(this);
             }
 
-            this.addSetterFilter(function(prop, val){
+            this.addSetterFilter(function(prop, val, prev){
                 if(observerOpts && observerOpts.recursive && typeof val == 'object' && !val.length){
                     make.observable(val, observerOpts);
                 }
-                self.trigger(prop, val);
+                self.trigger(prop, val, prev);
                 return val;
             });
         }
@@ -239,6 +239,8 @@
                     list[i](data);
                     if(list[i].once === true){
                         this.off(trigger, list[i]);
+                        i--;
+                        l--;
                     }
                 }catch(e){
                     var where= (observed.name || (observed.prototype? observed.prototype.name: ''));

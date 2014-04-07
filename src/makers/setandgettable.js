@@ -29,7 +29,7 @@
 			getFilters['*'].push(options.filterOut);
 		}
 
-		function execList(list, prop, val, oprop){
+		function execList(list, prop, val, oprop, prevVal){
 
 			var ret= val, prevRet= ret, l= 0;
 
@@ -37,12 +37,12 @@
 				l= list.length;
 				for(i= 0; i<l; i++){
 					if(prop === '*'){
-						ret= list[i](oprop, ret);
+						ret= list[i](oprop, ret, prevVal);
 						if(ret === void 0){
 							ret= prevRet;
 						}
 					}else{
-						ret= list[i](ret);
+						ret= list[i](ret, prevVal);
 						if(ret === void 0){
 							ret= prevRet;
 						}
@@ -57,7 +57,7 @@
 			var ret= val,
 				list= setFilters[prop];
 
-			ret= execList(list, prop, val);
+			ret= execList(list, prop, val, undefined, target[prop]);
 
 			list= setFilters['*'];
 			ret= execList(list, '*', ret, prop);
