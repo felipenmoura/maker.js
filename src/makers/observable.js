@@ -201,7 +201,7 @@
 
         if(!observerOpts.onlyByTrigger){
             if(!this.settable){
-                make.setAndGettable(this);
+                make.setAndGettable(this, observerOpts);
             }
 
             this.addSetterFilter(function(prop, val, prev){
@@ -290,7 +290,7 @@
             }
         }
 
-        Observer.apply(target.prototype || target, [target, observerOpts]);
+        Observer.apply( (observerOpts.useStatic)? target: (target.prototype || target), [target, observerOpts]);
 
         return target;
     };

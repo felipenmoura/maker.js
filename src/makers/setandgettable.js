@@ -4,7 +4,7 @@
 
 		options= options || {};
 
-		if(typeof target == 'function'){
+		if(typeof target == 'function' && !options.useStatic){
 			options.isPrototypeOf= target;
 			return make.setAndGettable(target.prototype, options);
 		}
@@ -198,7 +198,7 @@
 					for(i in prop){
 						if(prop.hasOwnProperty(i)){
 							name= 'set'+(i[0].toUpperCase() + i.substring(1));
-							if(!this[name] && (options.allowNewSetters || !options.protected)) {
+							if(!this[name] && (options.allowNewSetters || !options['protected'])) {
 								createSetterAndGetter(target, i, options.isPrototypeOf);
 							}
 							this[name](prop[i]);
