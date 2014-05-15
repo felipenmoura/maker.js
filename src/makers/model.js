@@ -56,6 +56,8 @@
             var curPointer= 0,
                 collectionId= model.identifier;
 
+            this.__makeData= this.__makeData || {};
+
             // making it indexable
             make.indexable(modelsList[collectionId]);
             
@@ -153,6 +155,10 @@
 
             this.queryAll= function(prop, valueLike){
                 return modelsList[collectionId].queryAll(prop, valueLike);
+            };
+
+            this.add= function(data){
+                oModel.create(data);
             };
 
             this.__makeData.tiable= true;

@@ -8,9 +8,9 @@ make.tiable= function(objOrClass){
 		var getId= function(target){
 			var targetName= target.name || target.id;
 
-			target._makerData= target._makerData||{};
-			if(target._makerData.ref){
-				return target._makerData.ref;
+			target._makeData= target._makeData||{};
+			if(target._makeData.ref){
+				return target._makeData.ref;
 			}
 
 			if(!targetName && target.prototype){
@@ -20,7 +20,7 @@ make.tiable= function(objOrClass){
 			}
 			//target+= "."+targetProperty;
 
-			target._makerData.ref= targetName;
+			target._makeData.ref= targetName;
 
 			return targetName;
 		};
@@ -85,11 +85,11 @@ make.tiable= function(objOrClass){
 		this.tiable= true;
 
 		this.untie= function(target, prop){
-			if(target._makerData && target._makerData.ref){
+			if(target._makeData && target._makeData.ref){
 				if(!prop){
-					delete tiedList[target._makerData.ref];
+					delete tiedList[target._makeData.ref];
 				}else{
-					delete tiedList[target._makerData.ref][prop];
+					delete tiedList[target._makeData.ref][prop];
 				}
 
 			}

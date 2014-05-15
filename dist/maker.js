@@ -330,7 +330,9 @@ make.indexable= function(obj){
             return this.query(prop, valueLike, start, true);
         }
 
-        //this.indexable= true;
+        if(!this.__makeData){
+            this.__makeData= {};
+        }
         this.__makeData.indexable= true;
 
     }
@@ -402,6 +404,8 @@ make.indexable= function(obj){
 
             var curPointer= 0,
                 collectionId= model.identifier;
+
+            this.__makeData= this.__makeData || {};
 
             // making it indexable
             make.indexable(modelsList[collectionId]);
@@ -500,6 +504,10 @@ make.indexable= function(obj){
 
             this.queryAll= function(prop, valueLike){
                 return modelsList[collectionId].queryAll(prop, valueLike);
+            };
+
+            this.add= function(data){
+                oModel.create(data);
             };
 
             this.__makeData.tiable= true;
@@ -713,7 +721,7 @@ make.indexable= function(obj){
 
         if(!observerOpts.onlyByTrigger){
             if(!this.settable){
-                make.setAndGettable(this);
+                make.setAndGettable(this, observerOpts);
             }
 
             this.addSetterFilter(function(prop, val, prev){
@@ -802,7 +810,7 @@ make.indexable= function(obj){
             }
         }
 
-        Observer.apply(target.prototype || target, [target, observerOpts]);
+        Observer.apply( (observerOpts.useStatic)? target: (target.prototype || target), [target, observerOpts]);
 
         return target;
     };
@@ -963,7 +971,7 @@ make.readonly= function(target, options){
 
 		options= options || {};
 
-		if(typeof target == 'function'){
+		if(typeof target == 'function' && !options.useStatic){
 			options.isPrototypeOf= target;
 			return make.setAndGettable(target.prototype, options);
 		}
@@ -1157,7 +1165,7 @@ make.readonly= function(target, options){
 					for(i in prop){
 						if(prop.hasOwnProperty(i)){
 							name= 'set'+(i[0].toUpperCase() + i.substring(1));
-							if(!this[name] && (options.allowNewSetters || !options.protected)) {
+							if(!this[name] && (options.allowNewSetters || !options['protected'])) {
 								createSetterAndGetter(target, i, options.isPrototypeOf);
 							}
 							this[name](prop[i]);
@@ -1301,9 +1309,9 @@ make.tiable= function(objOrClass){
 		var getId= function(target){
 			var targetName= target.name || target.id;
 
-			target._makerData= target._makerData||{};
-			if(target._makerData.ref){
-				return target._makerData.ref;
+			target._makeData= target._makeData||{};
+			if(target._makeData.ref){
+				return target._makeData.ref;
 			}
 
 			if(!targetName && target.prototype){
@@ -1313,7 +1321,7 @@ make.tiable= function(objOrClass){
 			}
 			//target+= "."+targetProperty;
 
-			target._makerData.ref= targetName;
+			target._makeData.ref= targetName;
 
 			return targetName;
 		};
@@ -1378,11 +1386,11 @@ make.tiable= function(objOrClass){
 		this.tiable= true;
 
 		this.untie= function(target, prop){
-			if(target._makerData && target._makerData.ref){
+			if(target._makeData && target._makeData.ref){
 				if(!prop){
-					delete tiedList[target._makerData.ref];
+					delete tiedList[target._makeData.ref];
 				}else{
-					delete tiedList[target._makerData.ref][prop];
+					delete tiedList[target._makeData.ref][prop];
 				}
 
 			}

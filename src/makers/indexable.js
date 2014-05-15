@@ -242,7 +242,9 @@ make.indexable= function(obj){
             return this.query(prop, valueLike, start, true);
         }
 
-        //this.indexable= true;
+        if(!this.__makeData){
+            this.__makeData= {};
+        }
         this.__makeData.indexable= true;
 
     }
